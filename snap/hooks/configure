@@ -1,0 +1,6 @@
+#!/bin/sh -e
+
+# dummy configure needed for enabling configs
+
+exit 0
+

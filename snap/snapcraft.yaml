@@ -1,0 +1,148 @@
+# yamllint disable rule:line-length
+name: postgresql
+base: core22
+version: '14.15'
+summary: PostgreSQL in a snap.
+description: |
+  PostgreSQL is a free and open-source relational database management
+  system emphasizing extensibility and SQL compliance.
+
+architectures:
+  - build-on: [amd64]
+    build-for: [amd64]
+  - build-on: [arm64]
+    build-for: [arm64]
+grade: stable # must be 'stable' to release into candidate/stable channels
+confinement: strict # use 'strict' once you have the right plugs and slots
+
+system-usernames:
+  snap_daemon: shared
+
+plugs:
+  shared-memory:
+    private: true
+
+layout:
+  /usr/lib/python3/dist-packages:
+    bind: $SNAP/usr/lib/python3/dist-packages
+  /etc/perl:
+    bind: $SNAP/etc/perl
+  /usr/local/lib/x86_64-linux-gnu/perl:
+    bind: $SNAP/usr/local/lib/x86_64-linux-gnu/perl
+  /usr/local/share/perl:
+    bind: $SNAP/usr/local/share/perl
+  /usr/lib/x86_64-linux-gnu/perl5:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/perl5
+  /usr/share/perl5:
+    bind: $SNAP/usr/share/perl5
+  /usr/lib/x86_64-linux-gnu/perl-base:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/perl-base
+  /usr/lib/x86_64-linux-gnu/perl:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/perl
+  /usr/share/perl:
+    bind: $SNAP/usr/share/perl
+  /usr/local/lib/site_perl:
+    bind: $SNAP/usr/local/lib/site_perl
+  /usr/lib/postgresql/14:
+    bind: $SNAP/usr/lib/postgresql/14
+  /var/cache/postgresql:
+    bind: $SNAP_COMMON/var/cache/postgresql
+
+# TODO: Add postgresql log path once configured
+slots:
+  logs:
+    interface: content
+    source:
+      read:
+        - $SNAP_COMMON/var/log/postgresql
+
+apps:
+  createdb:
+    command: usr/bin/createdb
+  createuser:
+    command: usr/bin/createuser
+  pg-archivecleanup:
+    command: usr/bin/pg_archivecleanup
+  pg-buildext:
+    command: usr/bin/pg_buildext
+  pg-createcluster:
+    command: usr/bin/pg_createcluster
+  pg-dropcluster:
+    command: usr/bin/pg_dropcluster
+  pg-isready:
+    command: usr/bin/pg_isready
+  pg-restore:
+    command: usr/bin/pg_restore
+    plugs:
+      - network
+  pg-upgradecluster:
+    command: usr/bin/pg_upgradecluster
+  pg-backupcluster:
+    command: usr/bin/pg_backupcluster
+  pg-config:
+    command: usr/bin/pg_config
+  pg-dump:
+    command: usr/bin/pg_dump
+    plugs:
+      - network
+  pg-lsclusters:
+    command: usr/bin/pg_lsclusters
+  pg-recvlogical:
+    command: usr/bin/pg_recvlogical
+  pg-restorecluster:
+    command: usr/bin/pg_restorecluster
+  pg-virtualenv:
+    command: usr/bin/pg_virtualenv
+  pg-basebackup:
+    command: usr/bin/pg_basebackup
+  pg-conftool:
+    command: usr/bin/pg_conftool
+  pg-ctl:
+    command: usr/lib/postgresql/14/bin/pg_ctl
+  pg-ctlcluster:
+    command: usr/bin/pg_ctlcluster
+  pg-dumpall:
+    command: usr/bin/pg_dumpall
+    plugs:
+      - network
+  pg-receivewal:
+    command: usr/bin/pg_receivewal
+  pg-renamecluster:
+    command: usr/bin/pg_renamecluster
+  pg-updatedicts:
+    command: usr/sbin/pg_updatedicts
+  pgbench:
+    command: usr/bin/pgbench
+  psql:
+    command: usr/bin/psql
+    plugs:
+      - network
+  postgresql:
+    command: start-postgresql.sh
+    daemon: simple
+    plugs:
+      - network
+      - network-bind
+
+parts:
+  postgres-debs:
+    plugin: nil
+    stage-packages:
+      - postgresql=14+238
+      - util-linux
+      - locales-all
+    organize:
+      usr/share/doc/postgresql/copyright: licenses/COPYRIGHT-postgresql
+      usr/share/doc/util-linux/copyright: licenses/COPYRIGHT-util-linux
+      usr/share/doc/locales-all/copyright: licenses/COPYRIGHT-locales-all
+  snap-license:
+    plugin: dump
+    source: .
+    source-type: local
+    stage:
+      - licenses/LICENSE-snap
+    organize:
+      LICENSE: licenses/LICENSE-snap
+  wrapper:
+    plugin: dump
+    source: snap/local
