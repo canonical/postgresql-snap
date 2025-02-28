@@ -40,8 +40,8 @@ layout:
     bind: $SNAP/usr/share/perl
   /usr/local/lib/site_perl:
     bind: $SNAP/usr/local/lib/site_perl
-  /usr/lib/postgresql/14:
-    bind: $SNAP/usr/lib/postgresql/14
+  /usr/lib/postgresql/16:
+    bind: $SNAP/usr/lib/postgresql/16
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
 
@@ -94,7 +94,7 @@ apps:
   pg-conftool:
     command: usr/bin/pg_conftool
   pg-ctl:
-    command: usr/lib/postgresql/14/bin/pg_ctl
+    command: usr/lib/postgresql/16/bin/pg_ctl
   pg-ctlcluster:
     command: usr/bin/pg_ctlcluster
   pg-dumpall:
