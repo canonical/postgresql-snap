@@ -20,6 +20,8 @@ plugs:
     private: true
 
 layout:
+  /usr/bin/perl:
+    symlink: $SNAP/usr/bin/perl
   /usr/lib/python3/dist-packages:
     bind: $SNAP/usr/lib/python3/dist-packages
   /etc/perl:
