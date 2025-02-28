@@ -30,5 +30,5 @@ sudo snap install ./postgresql*.snap --devmode
 ## License
 The PostgreSQL Snap is free software, distributed under the Apache
 Software License, version 2.0. See
-[LICENSE](https://github.com/canonical/postgresql-snap/blob/14.0/edge/licenses/LICENSE-snap)
+[LICENSE](https://github.com/canonical/postgresql-snap/blob/14.0/edge/LICENSE)
 for more information.
