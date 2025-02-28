@@ -41,8 +41,7 @@ def test_all_apps():
                 print(f"Running {snapcraft['name']}.{app}...")
                 try:
                     subprocess.check_output(
-                        f"{snapcraft['name']}.{app} {override.get(app, '--help')}".split(),
-                        check=True,
+                        f"{snapcraft['name']}.{app} {override.get(app, '--help')}".split()
                     )
                 except subprocess.CalledProcessError as e:
                     print(e)
@@ -61,13 +60,11 @@ def test_all_services():
                 print(f"Running {snapcraft['name']}.{app}...")
                 try:
                     subprocess.check_output(
-                        f"sudo snap start {snapcraft['name']}.{app}".split(), check=True
+                        f"sudo snap start {snapcraft['name']}.{app}".split()
                     )
                     time.sleep(5)
                     service = subprocess.check_output(
-                        f"snap services {snapcraft['name']}.{app}".split(),
-                        check=True,
-                        capture_output=True,
+                        f"snap services {snapcraft['name']}.{app}".split()
                     )
                     subprocess.check_output(
                         f"sudo snap stop {snapcraft['name']}.{app}".split()
