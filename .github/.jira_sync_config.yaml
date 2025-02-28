@@ -6,9 +6,6 @@ settings:
   # Repository specific settings
   components: # Jira components that will be added to Jira issue
     - postgresql-vm
-    - postgresql-k8s
-    - pgbouncer-vm
-    - pgbouncer-k8s
     - snap
 
   # Settings shared across Data Platform repositories
