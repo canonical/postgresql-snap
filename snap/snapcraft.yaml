@@ -1,6 +1,6 @@
 name: postgresql
-base: core22
-version: '14.15'
+base: core24
+version: '16.6'
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
@@ -126,7 +126,7 @@ parts:
   postgres-debs:
     plugin: nil
     stage-packages:
-      - postgresql=14+238
+      - postgresql=16+257build1
       - util-linux
       - locales-all
     organize:
