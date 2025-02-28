@@ -6,11 +6,9 @@ description: |
   PostgreSQL is a free and open-source relational database management
   system emphasizing extensibility and SQL compliance.
 
-architectures:
-  - build-on: [amd64]
-    build-for: [amd64]
-  - build-on: [arm64]
-    build-for: [arm64]
+platforms:
+  amd64:
+  arm64:
 grade: stable
 confinement: strict
 
