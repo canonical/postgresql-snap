@@ -47,7 +47,6 @@ layout:
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
 
-# TODO: Add postgresql log path once configured
 slots:
   logs:
     interface: content
