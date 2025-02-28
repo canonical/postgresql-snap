@@ -1,0 +1,19 @@
+#!/bin/bash
+
+mkdir -p $SNAP_DATA/etc/postgresql
+
+mkdir -p $SNAP_COMMON/pgsql/
+mkdir -p $SNAP_COMMON/pgsql/data
+mkdir -p $SNAP_COMMON/postgresql.failed
+mkdir -p $SNAP_COMMON/data/db
+
+mkdir -p $SNAP_COMMON/var/lib/postgresql
+mkdir -p $SNAP_COMMON/var/log/postgresql
+
+chown -R 584788:root $SNAP_COMMON/*
+chown -R 584788:root $SNAP_DATA/*
+
+export LOCPATH="${SNAP}"/usr/lib/locale
+export PGDATA=$SNAP_COMMON/pgsql/data
+
+"${SNAP}/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- "${SNAP}/usr/lib/postgresql/14/bin/initdb" -U postgres -D "${PGDATA}"

@@ -1,0 +1,44 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+name: Tests
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v30.1.3
+
+  build:
+    name: Build snap
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v30.1.3
+
+  smoke:
+    name: Smoke test snap
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      - lint
+      - build
+    steps:
+      - name: Uninstall Postgresql
+        run: |
+          sudo apt --purge remove postgresql*
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install tox & poetry
+        run: |
+          pipx install tox
+          pipx install poetry
+      - name: Download snap package(s)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ needs.build.outputs.artifact-prefix }}-*
+          merge-multiple: true
+      - name: Run tests
+        run: tox run -e smoke
