@@ -17,13 +17,13 @@ on:
 jobs:
   build:
     name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v29.1.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v30.1.3
 
   release:
     name: Release snap
     needs:
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_snap.yaml@v29.1.0
+    uses: canonical/data-platform-workflows/.github/workflows/release_snap.yaml@v30.1.3
     with:
       channel: 14/edge
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
