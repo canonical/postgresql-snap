@@ -1,4 +1,3 @@
-# yamllint disable rule:line-length
 name: postgresql
 base: core22
 version: '14.15'
@@ -12,8 +11,8 @@ architectures:
     build-for: [amd64]
   - build-on: [arm64]
     build-for: [arm64]
-grade: stable # must be 'stable' to release into candidate/stable channels
-confinement: strict # use 'strict' once you have the right plugs and slots
+grade: stable
+confinement: strict
 
 system-usernames:
   snap_daemon: shared

@@ -19,16 +19,13 @@ def test_all_apps():
     with open("snap/snapcraft.yaml") as file:
         snapcraft = yaml.safe_load(file)
 
-        override = {
-            "pgbackrest": "version",
-        }
+        override = {}
 
         skip = [
             "pg-buildext",
             "pg-conftool",
             "pg-createcluster",
             "pg-dropcluster",
-            "pg-receivexlog",
             "pg-upgradecluster",
             "pg-backupcluster",
             "pg-restorecluster",
@@ -52,9 +49,7 @@ def test_all_services():
     with open("snap/snapcraft.yaml") as file:
         snapcraft = yaml.safe_load(file)
 
-        skip = [
-            "pgbackrest-service",
-        ]
+        skip = []
 
         for app, data in snapcraft["apps"].items():
             if bool(data.get("daemon")) and app not in skip:
@@ -76,6 +71,10 @@ def test_all_services():
 def test_version():
     with open("snap/snapcraft.yaml") as file:
         snapcraft = yaml.safe_load(file)
-        snap_version = snapcraft['version']
-        app_version = subprocess.check_output([f"{snapcraft['name']}.pg-isready", "--version"]).decode().split(" ")[2]
+        snap_version = snapcraft["version"]
+        app_version = (
+            subprocess.check_output([f"{snapcraft['name']}.pg-isready", "--version"])
+            .decode()
+            .split(" ")[2]
+        )
         assert snap_version == app_version
