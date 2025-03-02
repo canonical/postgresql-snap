@@ -1,16 +1,14 @@
 name: postgresql
-base: core22
-version: '14.15'
+base: core24
+version: '16.6'
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
   system emphasizing extensibility and SQL compliance.
 
-architectures:
-  - build-on: [amd64]
-    build-for: [amd64]
-  - build-on: [arm64]
-    build-for: [arm64]
+platforms:
+  amd64:
+  arm64:
 grade: stable
 confinement: strict
 
@@ -22,6 +20,8 @@ plugs:
     private: true
 
 layout:
+  /usr/bin/perl:
+    symlink: $SNAP/usr/bin/perl
   /usr/lib/python3/dist-packages:
     bind: $SNAP/usr/lib/python3/dist-packages
   /etc/perl:
@@ -42,8 +42,8 @@ layout:
     bind: $SNAP/usr/share/perl
   /usr/local/lib/site_perl:
     bind: $SNAP/usr/local/lib/site_perl
-  /usr/lib/postgresql/14:
-    bind: $SNAP/usr/lib/postgresql/14
+  /usr/lib/postgresql/16:
+    bind: $SNAP/usr/lib/postgresql/16
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
 
@@ -96,7 +96,7 @@ apps:
   pg-conftool:
     command: usr/bin/pg_conftool
   pg-ctl:
-    command: usr/lib/postgresql/14/bin/pg_ctl
+    command: usr/lib/postgresql/16/bin/pg_ctl
   pg-ctlcluster:
     command: usr/bin/pg_ctlcluster
   pg-dumpall:
@@ -126,7 +126,7 @@ parts:
   postgres-debs:
     plugin: nil
     stage-packages:
-      - postgresql=14+238
+      - postgresql=16+257build1
       - util-linux
       - locales-all
     organize:
