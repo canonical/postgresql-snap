@@ -1,6 +1,6 @@
 name: postgresql
 base: core22
-version: '14.15'
+version: '14.17'
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
