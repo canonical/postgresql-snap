@@ -46,6 +46,11 @@ layout:
     bind: $SNAP/usr/lib/postgresql/16
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
+  $SNAP/etc/postgresql:
+    symlink: $SNAP_DATA/etc/postgresql
+  $SNAP/etc/postgresql-common:
+    symlink: $SNAP_DATA/etc/postgresql-common
+
 
 slots:
   logs:
@@ -130,6 +135,8 @@ parts:
       - util-linux
       - locales-all
     organize:
+      etc/postgresql: default-config/etc/postgresql
+      etc/postgresql-common: default-config/etc/postgresql-common
       usr/share/doc/postgresql/copyright: licenses/COPYRIGHT-postgresql
       usr/share/doc/util-linux/copyright: licenses/COPYRIGHT-util-linux
       usr/share/doc/locales-all/copyright: licenses/COPYRIGHT-locales-all

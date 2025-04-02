@@ -1,11 +1,12 @@
 #!/bin/bash
 
-mkdir -p $SNAP_DATA/etc/postgresql
+mkdir -p $SNAP_DATA/etc
+cp -r $SNAP/default-config/etc/postgresql $SNAP_DATA/etc
+cp -r $SNAP/default-config/etc/postgresql-common $SNAP_DATA/etc
 
 mkdir -p $SNAP_COMMON/pgsql/
 mkdir -p $SNAP_COMMON/pgsql/data
 mkdir -p $SNAP_COMMON/postgresql.failed
-mkdir -p $SNAP_COMMON/data/db
 
 mkdir -p $SNAP_COMMON/var/lib/postgresql
 mkdir -p $SNAP_COMMON/var/log/postgresql
