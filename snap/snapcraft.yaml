@@ -70,6 +70,8 @@ apps:
     command: usr/bin/pg_buildext
   createcluster:
     command: usr/bin/pg_createcluster
+    # plugs:
+    #   - network
   dropcluster:
     command: usr/bin/pg_dropcluster
   isready:
@@ -126,6 +128,11 @@ apps:
     plugs:
       - network
       - network-bind
+
+# hooks:
+#     install:
+#         plugs:
+#           - network
 
 parts:
   postgres-debs:
