@@ -68,54 +68,52 @@ apps:
     command: usr/bin/pg_archivecleanup
   buildext:
     command: usr/bin/pg_buildext
-  createcluster:
-    command: usr/bin/pg_createcluster
-    # plugs:
-    #   - network
-  dropcluster:
-    command: usr/bin/pg_dropcluster
+  # createcluster:
+  #   command: usr/bin/pg_createcluster
+  # dropcluster:
+  #   command: usr/bin/pg_dropcluster
   isready:
     command: usr/bin/pg_isready
   restore:
     command: usr/bin/pg_restore
     plugs:
       - network
-  upgradecluster:
-    command: usr/bin/pg_upgradecluster
-  backupcluster:
-    command: usr/bin/pg_backupcluster
+  # upgradecluster:
+  #   command: usr/bin/pg_upgradecluster
+  # backupcluster:
+  #   command: usr/bin/pg_backupcluster
   config:
     command: usr/bin/pg_config
   dump:
     command: usr/bin/pg_dump
     plugs:
       - network
-  lsclusters:
-    command: usr/bin/pg_lsclusters
+  # lsclusters:
+  #   command: usr/bin/pg_lsclusters
   recvlogical:
     command: usr/bin/pg_recvlogical
-  restorecluster:
-    command: usr/bin/pg_restorecluster
-  virtualenv:
-    command: usr/bin/pg_virtualenv
+  # restorecluster:
+  #   command: usr/bin/pg_restorecluster
+  # virtualenv:
+  #   command: usr/bin/pg_virtualenv
   basebackup:
     command: usr/bin/pg_basebackup
-  conftool:
-    command: usr/bin/pg_conftool
+  # conftool:
+  #   command: usr/bin/pg_conftool
   ctl:
     command: usr/lib/postgresql/16/bin/pg_ctl
-  ctlcluster:
-    command: usr/bin/pg_ctlcluster
+  # ctlcluster:
+  #   command: usr/bin/pg_ctlcluster
   dumpall:
     command: usr/bin/pg_dumpall
     plugs:
       - network
   receivewal:
     command: usr/bin/pg_receivewal
-  renamecluster:
-    command: usr/bin/pg_renamecluster
-  updatedicts:
-    command: usr/sbin/pg_updatedicts
+  # renamecluster:
+  #   command: usr/bin/pg_renamecluster
+  # updatedicts:
+  #   command: usr/sbin/pg_updatedicts
   pgbench:
     command: usr/bin/pgbench
   psql:
@@ -123,16 +121,11 @@ apps:
     plugs:
       - network
   postgresql:
-    command: start-postgresql.sh
+    command: "start-cluster.sh main"
     daemon: simple
     plugs:
       - network
       - network-bind
-
-# hooks:
-#     install:
-#         plugs:
-#           - network
 
 parts:
   postgres-debs:

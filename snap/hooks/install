@@ -2,9 +2,8 @@
 
 PG_MAJOR_VER=$(echo "$SNAP_VERSION" | cut -d "." -f 1)
 
-mkdir -p "$SNAP_DATA/etc/postgresql/$PG_MAJOR_VER/main"
+mkdir -p "$SNAP_DATA/etc/postgresql/$PG_MAJOR_VER"
 cp -r "$SNAP/default-config/etc/postgresql-common" "$SNAP_DATA/etc"
-
 mkdir -p "$SNAP_COMMON/pgsql/data"
 
 mkdir -p "$SNAP_COMMON/var/lib/postgresql"
@@ -13,20 +12,4 @@ mkdir -p "$SNAP_COMMON/var/log/postgresql"
 chown -R 584788:root "$SNAP_COMMON"/*
 chown -R 584788:root "$SNAP_DATA"/*
 
-export LOCPATH="$SNAP/usr/lib/locale"
-export PGDATA="$SNAP_COMMON/pgsql/data"
-export CLUSTERCONF="$SNAP_DATA/etc/postgresql/$PG_MAJOR_VER/main"
-
-# Based on /usr/bin/pg_createcluster
-# TODO add auth-local
-echo "Creating new PostgreSQL cluster $PG_MAJOR_VER/main ...";
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- "$SNAP/usr/lib/postgresql/$PG_MAJOR_VER/bin/initdb" -U postgres -D "$PGDATA" --auth-host scram-sha-256 --no-instructions
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- mv "$PGDATA/postgresql.conf" "$CLUSTERCONF"
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- chmod 644 "$CLUSTERCONF/postgresql.conf"
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- mv "$PGDATA/pg_hba.conf" "$CLUSTERCONF"
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- chmod 640 "$CLUSTERCONF/pg_hba.conf"
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- mv "$PGDATA/pg_ident.conf" "$CLUSTERCONF"
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- chmod 640 "$CLUSTERCONF/pg_ident.conf"
-
-# "$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon --regid snap_daemon -- "$SNAP/usr/bin/pg_createcluster" -u snap_daemon -d "$PGDATA" -s /tmp -l "$SNAP_COMMON/var/log/postgresql" "$PG_MAJOR_VER" main
-# "$SNAP/usr/bin/pg_createcluster" -u snap_daemon -d "$PGDATA" -s /tmp -l "$SNAP_COMMON/var/log/postgresql" "$PG_MAJOR_VER" main
+$SNAP/create-cluster.sh main
