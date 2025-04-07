@@ -115,6 +115,7 @@ apps:
     command: ctl-cluster.sh
     plugs:
       - network
+      - network-bind
   dumpall:
     command: usr/bin/pg_dumpall
     plugs:
