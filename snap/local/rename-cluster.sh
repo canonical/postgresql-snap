@@ -6,4 +6,4 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- pg_dropcluster "$@"
+"$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- pg_renamecluster "$@"

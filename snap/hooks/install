@@ -1,7 +1,7 @@
 #!/bin/bash
 
-mkdir -p "$SNAP_DATA/etc/postgresql/"
-cp -r "$SNAP/default-config/etc/postgresql-common" "$SNAP_DATA/etc"
+mkdir -p "$SNAP_COMMON/etc/postgresql/"
+cp -r "$SNAP/default-config/etc/postgresql-common" "$SNAP_COMMON/etc"
 
 mkdir -p "$SNAP_COMMON/var/lib/postgresql"
 mkdir -p "$SNAP_COMMON/var/log/postgresql"
@@ -9,4 +9,6 @@ mkdir -p "$SNAP_COMMON/var/log/postgresql"
 chown -R 584792:root "$SNAP_COMMON"/*
 chown -R 584792:root "$SNAP_DATA"/*
 
-"$SNAP/create-cluster.sh" main
+PG_MAJOR_VER=$(echo "$SNAP_VERSION" | cut -d "." -f 1)
+
+"$SNAP/create-cluster.sh" "$PG_MAJOR_VER" main

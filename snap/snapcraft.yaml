@@ -56,9 +56,9 @@ layout:
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
   /etc/postgresql:
-    bind: $SNAP_DATA/etc/postgresql
+    bind: $SNAP_COMMON/etc/postgresql
   /etc/postgresql-common:
-    bind: $SNAP_DATA/etc/postgresql-common
+    bind: $SNAP_COMMON/etc/postgresql-common
   /var/lib/postgresql:
     bind: $SNAP_COMMON/var/lib/postgresql
   /var/log/postgresql:
@@ -72,7 +72,7 @@ apps:
   createuser:
     command: usr/bin/createuser
   archivecleanup:
-    command: usr/bin/pg_archivecleanup
+    command: archivecleanup.sh
   buildext:
     command: usr/bin/pg_buildext
   createcluster:
@@ -122,8 +122,8 @@ apps:
       - network
   receivewal:
     command: usr/bin/pg_receivewal
-  # renamecluster:
-  #   command: usr/bin/pg_renamecluster
+  renamecluster:
+    command: rename-cluster.sh
   # updatedicts:
   #   command: usr/sbin/pg_updatedicts
   pgbench:
@@ -133,7 +133,8 @@ apps:
     plugs:
       - network
   postgresql:
-    command: "start-cluster.sh main"
+    command: >-
+      ctl-cluster.sh --skip-systemctl-redirect --foreground 16 main start
     daemon: simple
     plugs:
       - network
