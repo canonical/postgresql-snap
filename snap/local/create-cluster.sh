@@ -7,24 +7,55 @@ if [ "$EUID" -ne 0 ]
 fi
 
 # Filter out unwanted args
-REMOVE_IDX=()
-CLUSTER_ARGS=("$@")
+CLUSTER_ARGS=()
 INITDB_ARGS=()
-for ((i=0; i<"${#CLUSTER_ARGS[@]}"; ++i)); do
-    case ${CLUSTER_ARGS[i]} in
-        -u) REMOVE_IDX=($((i+1)) $((i)) "${REMOVE_IDX[@]}"); echo "WARNING: User must be _daemon_! Skipping";; 
-        -g) REMOVE_IDX=($((i+1)) $((i)) "${REMOVE_IDX[@]}"); echo "WARNING: Group must be root! Skipping";; 
-        -s) REMOVE_IDX=($((i+1)) $((i)) "${REMOVE_IDX[@]}"); echo "WARNING: Socket dir must be default! Skipping";; 
-        -d) REMOVE_IDX=($((i+1)) $((i)) "${REMOVE_IDX[@]}"); echo "WARNING: Data dir must be default! Skipping";; 
-        -l) REMOVE_IDX=($((i+1)) $((i)) "${REMOVE_IDX[@]}"); echo "WARNING: Logfile must be default! Skipping";; 
-        --start) REMOVE_IDX=($((i)) "${REMOVE_IDX[@]}"); echo "WARNING: New cluster cannot be started! Skipping";; 
-        --start-conf) REMOVE_IDX=($((i+1)) $((i)) "${REMOVE_IDX[@]}"); echo "WARNING: Start conf must be manual! Skipping";; 
-        --) INITDB_ARGS=("${CLUSTER_ARGS[@]:i+1}");CLUSTER_ARGS=("${CLUSTER_ARGS[@]::i}");;
-    esac
-done
+SKIP_NEXT=0
 
-for ((i=0; i<"${#REMOVE_IDX[@]}"; ++i)); do
-    unset "CLUSTER_ARGS[REMOVE_IDX[i]]";
+while [[ $# -gt 0 ]]; do
+    if (( SKIP_NEXT )); then
+        SKIP_NEXT=0
+        shift
+        continue
+    fi
+
+    case "$1" in
+        -u)
+            echo "WARNING: User must be _daemon_! Skipping"
+            SKIP_NEXT=1
+            ;;
+        -g)
+            echo "WARNING: Group must be root! Skipping"
+            SKIP_NEXT=1
+            ;;
+        -s)
+            echo "WARNING: Socket dir must be default! Skipping"
+            SKIP_NEXT=1
+            ;;
+        -d)
+            echo "WARNING: Data dir must be default! Skipping"
+            SKIP_NEXT=1
+            ;;
+        -l)
+            echo "WARNING: Logfile must be default! Skipping"
+            SKIP_NEXT=1
+            ;;
+        --start)
+            echo "WARNING: New cluster cannot be started! Skipping"
+            ;;
+        --start-conf)
+            echo "WARNING: Start conf must be manual! Skipping"
+            SKIP_NEXT=1
+            ;;
+        --)
+            shift
+            INITDB_ARGS=("$@")
+            break
+            ;;
+        *)
+            CLUSTER_ARGS+=("$1")
+            ;;
+    esac
+    shift
 done
 
 PG_MAJOR_VER=$(echo "$SNAP_VERSION" | cut -d "." -f 1)
