@@ -61,8 +61,8 @@ done
 PG_MAJOR_VER=$(echo "$SNAP_VERSION" | cut -d "." -f 1)
 NAME="${CLUSTER_ARGS[-1]}"
 
-if [ "$PG_MAJOR_VER" -ne "${CLUSTER_ARGS[-2]}" ]
-  then echo "Cannot create $1 cluster on $PG_MAJOR_VER snap."
+if [ "$PG_MAJOR_VER" != "${CLUSTER_ARGS[-2]}" ]
+  then echo "Cannot create ${CLUSTER_ARGS[-2]} cluster on $PG_MAJOR_VER snap."
   exit
 fi
 

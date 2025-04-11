@@ -31,6 +31,8 @@ layout:
     symlink: $SNAP/usr/bin/install
   /usr/bin/pg_lsclusters:
     symlink: $SNAP/usr/bin/pg_lsclusters
+  /usr/bin/pg_ctlcluster:
+    symlink: $SNAP/usr/bin/pg_ctlcluster
   /usr/bin/pg_dropcluster:
     symlink: $SNAP/usr/bin/pg_dropcluster
   /usr/lib/python3/dist-packages:
@@ -124,6 +126,9 @@ apps:
     command: usr/bin/pg_receivewal
   renamecluster:
     command: rename-cluster.sh
+    plugs:
+      - network
+      - network-bind
   # updatedicts:
   #   command: usr/sbin/pg_updatedicts
   pgbench:
