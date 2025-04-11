@@ -172,6 +172,13 @@ parts:
       # Pass user in startup checks
       sed -i "s/psql -h /psql -U postgres -h /g" \
         $SNAPCRAFT_STAGE/usr/bin/pg_ctlcluster
+      # Skip systemd when renaming and dropping
+      sed -i \
+        "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
+        $SNAPCRAFT_STAGE/usr/bin/pg_dropcluster
+      sed -i \
+        "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
+        $SNAPCRAFT_STAGE/usr/bin/pg_renamecluster
     organize:
       etc/postgresql: default-config/etc/postgresql
       etc/postgresql-common: default-config/etc/postgresql-common
