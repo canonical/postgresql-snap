@@ -155,19 +155,23 @@ parts:
       - coreutils
     override-stage: |
       craftctl default
-      # Use tmp for socket and bundled install
+      # Use bundled install
       ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
         "s/system 'install'/system 'snapped_install'/g"
       sed -i "s/system 'install'/system 'snapped_install'/g" \
-        $SNAPCRAFT_STAGE/usr/share/perl5/PgCommon.pm
-      ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
-        's/\/var\/run\/postgresql/\/tmp/g'
-      sed -i 's/\/var\/run\/postgresql/\/tmp/g' \
         $SNAPCRAFT_STAGE/usr/share/perl5/PgCommon.pm
       sed -i 's/qw(install/qw(snapped_install/g' \
         $SNAPCRAFT_STAGE/usr/bin/pg_createcluster
       sed -i "s/system ('install'/system ('snapped_install'/g" \
         $SNAPCRAFT_STAGE/usr/bin/pg_createcluster
+      # Use tmp for socket and bundled install
+      ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
+        's/\/var\/run\/postgresql/\/tmp/g'
+      sed -i 's/\/var\/run\/postgresql/\/tmp/g' \
+        $SNAPCRAFT_STAGE/usr/share/perl5/PgCommon.pm
+      # Pass user in startup checks
+      sed -i "s/psql -h /psql -U postgres -h /g" \
+        $SNAPCRAFT_STAGE/usr/bin/pg_ctlcluster
     organize:
       etc/postgresql: default-config/etc/postgresql
       etc/postgresql-common: default-config/etc/postgresql-common
