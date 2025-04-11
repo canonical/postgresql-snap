@@ -75,8 +75,8 @@ apps:
     command: usr/bin/createuser
   archivecleanup:
     command: archivecleanup.sh
-  buildext:
-    command: usr/bin/pg_buildext
+  # buildext:
+  #   command: usr/bin/pg_buildext
   createcluster:
     command: create-cluster.sh
     plugs:
@@ -110,9 +110,12 @@ apps:
   basebackup:
     command: usr/bin/pg_basebackup
   conftool:
-    command: usr/bin/pg_conftool
+    command: conftool.sh
   ctl:
-    command: usr/lib/postgresql/16/bin/pg_ctl
+    command: ctl.sh
+    plugs:
+      - network
+      - network-bind
   ctlcluster:
     command: ctl-cluster.sh
     plugs:
