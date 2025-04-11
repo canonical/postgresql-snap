@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-if [ "$EUID" -ne 0 ]
-  then echo "Need to be root to switch to snap _daemon_ user."
-  exit
+if [ "${EUID}" != "0" ]; then
+  echo "Error: run it as root (to utilize snap user _daemon_)." >&2
+  exit 1
 fi
 
 "$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- pg_dropcluster "$@"

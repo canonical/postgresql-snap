@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-if [ "$EUID" -ne 0 ]
-  then echo "Need to be root to switch to snap _daemon_ user."
-  exit
+if [ "${EUID}" != "0" ]; then
+  echo "Error: run it as root (to utilize snap user _daemon_)." >&2
+  exit 1
 fi
 
 # Filter out unwanted args
@@ -94,6 +94,6 @@ fi
 "$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- pg_createcluster -u _daemon_ -g root --start-conf=manual "${CLUSTER_ARGS[@]}" -- "${INITDB_ARGS[@]}"
 
 # Inject LD_LIBRARY_PATH in the env file
-echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'" | "$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- tee -a  "$SNAP_COMMON/etc/postgresql/$PG_MAJOR_VER/$NAME/environment"
+echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'" | sed "s#/$SNAP_REVISION/#/current/#g" | "$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- tee -a  "$SNAP_COMMON/etc/postgresql/$PG_MAJOR_VER/$NAME/environment"
 
-echo "The cluster can be started with: 'postgresql.ctlcluster --skip-systemctl-redirect --foreground $PG_MAJOR_VER $NAME start'"
+echo "The cluster can be started with: 'postgresql.ctlcluster --skip-systemctl-redirect $PG_MAJOR_VER $NAME start'"
