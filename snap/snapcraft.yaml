@@ -27,8 +27,6 @@ hooks:
       - network
 
 layout:
-  /usr/bin/perl:
-    symlink: $SNAP/usr/bin/perl
   /usr/bin/snapped_install:
     symlink: $SNAP/usr/bin/install
   /usr/bin/pg_lsclusters:
@@ -51,12 +49,14 @@ layout:
     bind: $SNAP/usr/share/perl5
   /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl-base:
     bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl-base
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl:
+    bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl
   /usr/share/perl:
     bind: $SNAP/usr/share/perl
   /usr/local/lib/site_perl:
     bind: $SNAP/usr/local/lib/site_perl
-  /usr/lib/postgresql/16:
-    bind: $SNAP/usr/lib/postgresql/16
+  /usr/lib/postgresql/14:
+    bind: $SNAP/usr/lib/postgresql/14
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
   /etc/postgresql:
@@ -144,7 +144,7 @@ apps:
       - network
   postgresql:
     command: >-
-      ctl-cluster.sh --skip-systemctl-redirect --foreground 16 main start
+      ctl-cluster.sh --skip-systemctl-redirect --foreground 14 main start
     daemon: simple
     plugs:
       - network
