@@ -22,18 +22,18 @@ def test_all_apps():
         override = {}
 
         skip = [
-            "pg-buildext",
-            "pg-conftool",
-            "pg-createcluster",
-            "pg-dropcluster",
-            "pg-upgradecluster",
-            "pg-backupcluster",
-            "pg-restorecluster",
-            "pg-virtualenv",
-            "pg-ctlcluster",
-            "pg-renamecluster",
-            "pg-updatedicts",
-            "pg-lsclusters",
+            "buildext",
+            "conftool",
+            "createcluster",
+            "dropcluster",
+            "upgradecluster",
+            "backupcluster",
+            "restorecluster",
+            "virtualenv",
+            "ctlcluster",
+            "renamecluster",
+            "updatedicts",
+            "lsclusters",
         ]
 
         for app, data in snapcraft["apps"].items():
@@ -41,7 +41,7 @@ def test_all_apps():
                 print(f"Running {snapcraft['name']}.{app}...")
                 try:
                     subprocess.check_output(
-                        f"{snapcraft['name']}.{app} {override.get(app, '--help')}".split()
+                        f"sudo {snapcraft['name']}.{app} {override.get(app, '--help')}".split()
                     )
                 except subprocess.CalledProcessError as e:
                     print(e)
@@ -82,7 +82,7 @@ def test_version():
         snapcraft = yaml.safe_load(file)
         snap_version = snapcraft["version"]
         app_version = (
-            subprocess.check_output([f"{snapcraft['name']}.pg-isready", "--version"])
+            subprocess.check_output([f"{snapcraft['name']}.isready", "--version"])
             .decode()
             .split(" ")[2]
         )
