@@ -15,100 +15,127 @@ grade: stable
 confinement: strict
 
 system-usernames:
-  snap_daemon: shared
+  _daemon_: shared
 
 plugs:
   shared-memory:
     private: true
 
+hooks:
+  install:
+    plugs:
+      - network
+
 layout:
+  /usr/bin/perl:
+    symlink: $SNAP/usr/bin/perl
+  /usr/bin/snapped_install:
+    symlink: $SNAP/usr/bin/install
+  /usr/bin/pg_lsclusters:
+    symlink: $SNAP/usr/bin/pg_lsclusters
+  /usr/bin/pg_ctlcluster:
+    symlink: $SNAP/usr/bin/pg_ctlcluster
+  /usr/bin/pg_dropcluster:
+    symlink: $SNAP/usr/bin/pg_dropcluster
   /usr/lib/python3/dist-packages:
     bind: $SNAP/usr/lib/python3/dist-packages
   /etc/perl:
     bind: $SNAP/etc/perl
-  /usr/local/lib/x86_64-linux-gnu/perl:
-    bind: $SNAP/usr/local/lib/x86_64-linux-gnu/perl
+  /usr/local/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl:
+    bind: $SNAP/usr/local/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl
   /usr/local/share/perl:
     bind: $SNAP/usr/local/share/perl
-  /usr/lib/x86_64-linux-gnu/perl5:
-    bind: $SNAP/usr/lib/x86_64-linux-gnu/perl5
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl5:
+    bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl5
   /usr/share/perl5:
     bind: $SNAP/usr/share/perl5
-  /usr/lib/x86_64-linux-gnu/perl-base:
-    bind: $SNAP/usr/lib/x86_64-linux-gnu/perl-base
-  /usr/lib/x86_64-linux-gnu/perl:
-    bind: $SNAP/usr/lib/x86_64-linux-gnu/perl
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl-base:
+    bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/perl-base
   /usr/share/perl:
     bind: $SNAP/usr/share/perl
   /usr/local/lib/site_perl:
     bind: $SNAP/usr/local/lib/site_perl
-  /usr/lib/postgresql/14:
-    bind: $SNAP/usr/lib/postgresql/14
+  /usr/lib/postgresql/16:
+    bind: $SNAP/usr/lib/postgresql/16
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
-
-slots:
-  logs:
-    interface: content
-    source:
-      read:
-        - $SNAP_COMMON/var/log/postgresql
+  /etc/postgresql:
+    bind: $SNAP_COMMON/etc/postgresql
+  /etc/postgresql-common:
+    bind: $SNAP_COMMON/etc/postgresql-common
+  /var/lib/postgresql:
+    bind: $SNAP_COMMON/var/lib/postgresql
+  /var/log/postgresql:
+    bind: $SNAP_COMMON/var/log/postgresql
+  /usr/share/postgresql:
+    bind: $SNAP/usr/share/postgresql
 
 apps:
   createdb:
     command: usr/bin/createdb
   createuser:
     command: usr/bin/createuser
-  pg-archivecleanup:
-    command: usr/bin/pg_archivecleanup
-  pg-buildext:
-    command: usr/bin/pg_buildext
-  pg-createcluster:
-    command: usr/bin/pg_createcluster
-  pg-dropcluster:
-    command: usr/bin/pg_dropcluster
-  pg-isready:
+  archivecleanup:
+    command: archivecleanup.sh
+  # buildext:
+  #   command: usr/bin/pg_buildext
+  createcluster:
+    command: create-cluster.sh
+    plugs:
+      - network
+  dropcluster:
+    command: drop-cluster.sh
+  isready:
     command: usr/bin/pg_isready
-  pg-restore:
+  restore:
     command: usr/bin/pg_restore
     plugs:
       - network
-  pg-upgradecluster:
-    command: usr/bin/pg_upgradecluster
-  pg-backupcluster:
-    command: usr/bin/pg_backupcluster
-  pg-config:
+  # upgradecluster:
+  #   command: usr/bin/pg_upgradecluster
+  # backupcluster:
+  #   command: usr/bin/pg_backupcluster
+  config:
     command: usr/bin/pg_config
-  pg-dump:
+  dump:
     command: usr/bin/pg_dump
     plugs:
       - network
-  pg-lsclusters:
+  lsclusters:
     command: usr/bin/pg_lsclusters
-  pg-recvlogical:
+  recvlogical:
     command: usr/bin/pg_recvlogical
-  pg-restorecluster:
-    command: usr/bin/pg_restorecluster
-  pg-virtualenv:
-    command: usr/bin/pg_virtualenv
-  pg-basebackup:
+  # restorecluster:
+  #   command: usr/bin/pg_restorecluster
+  # virtualenv:
+  #   command: usr/bin/pg_virtualenv
+  basebackup:
     command: usr/bin/pg_basebackup
-  pg-conftool:
-    command: usr/bin/pg_conftool
-  pg-ctl:
-    command: usr/lib/postgresql/14/bin/pg_ctl
-  pg-ctlcluster:
-    command: usr/bin/pg_ctlcluster
-  pg-dumpall:
+  conftool:
+    command: conftool.sh
+  ctl:
+    command: ctl.sh
+    plugs:
+      - network
+      - network-bind
+  ctlcluster:
+    command: ctl-cluster.sh
+    plugs:
+      - network
+      - network-bind
+  dumpall:
     command: usr/bin/pg_dumpall
     plugs:
       - network
-  pg-receivewal:
+  receivewal:
     command: usr/bin/pg_receivewal
-  pg-renamecluster:
-    command: usr/bin/pg_renamecluster
-  pg-updatedicts:
-    command: usr/sbin/pg_updatedicts
+  renamecluster:
+    command: rename-cluster.sh
+    plugs:
+      - network
+      - network-bind
+  # updatedicts:
+  #   command: usr/sbin/pg_updatedicts
   pgbench:
     command: usr/bin/pgbench
   psql:
@@ -116,7 +143,8 @@ apps:
     plugs:
       - network
   postgresql:
-    command: start-postgresql.sh
+    command: >-
+      ctl-cluster.sh --skip-systemctl-redirect --foreground 16 main start
     daemon: simple
     plugs:
       - network
@@ -129,7 +157,38 @@ parts:
       - postgresql=14+238
       - util-linux
       - locales-all
+      - coreutils
+    override-stage: |
+      craftctl default
+      # Use bundled install
+      ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
+        "s/system 'install'/system 'snapped_install'/g"
+      sed -i "s/system 'install'/system 'snapped_install'/g" \
+        $SNAPCRAFT_STAGE/usr/share/perl5/PgCommon.pm
+      sed -i 's/qw(install/qw(snapped_install/g' \
+        $SNAPCRAFT_STAGE/usr/bin/pg_createcluster
+      sed -i "s/system ('install'/system ('snapped_install'/g" \
+        $SNAPCRAFT_STAGE/usr/bin/pg_createcluster
+      # Use tmp for socket and bundled install
+      ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
+        's/\/var\/run\/postgresql/\/tmp/g'
+      sed -i 's/\/var\/run\/postgresql/\/tmp/g' \
+        $SNAPCRAFT_STAGE/usr/share/perl5/PgCommon.pm
+      # Pass user in startup checks
+      sed -i "s/psql -h /psql -U postgres -h /g" \
+        $SNAPCRAFT_STAGE/usr/bin/pg_ctlcluster
+      # Skip systemd when renaming and dropping
+      sed -i \
+        "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
+        $SNAPCRAFT_STAGE/usr/bin/pg_dropcluster
+      sed -i \
+        "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
+        $SNAPCRAFT_STAGE/usr/bin/pg_renamecluster
     organize:
+      etc/postgresql: default-config/etc/postgresql
+      etc/postgresql-common: default-config/etc/postgresql-common
+      var/lib/postgresql: default-config/var/lib/postgresql
+      var/log/postgresql: default-config/var/log/postgresql
       usr/share/doc/postgresql/copyright: licenses/COPYRIGHT-postgresql
       usr/share/doc/util-linux/copyright: licenses/COPYRIGHT-util-linux
       usr/share/doc/locales-all/copyright: licenses/COPYRIGHT-locales-all
