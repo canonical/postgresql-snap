@@ -16,7 +16,7 @@ optional = true
 optional = true
 
 [tool.poetry.group.lint.dependencies]
-yamllint = "^1.37.0"
+yamllint = "^1.37.1"
 
 [tool.poetry.group.unit]
 optional = true
