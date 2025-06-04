@@ -1,6 +1,6 @@
 name: postgresql
 base: core24
-version: '16.8'
+version: '16.9'
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
@@ -27,8 +27,8 @@ hooks:
 layout:
   /usr/bin/perl:
     symlink: $SNAP/usr/bin/perl
-  /usr/bin/snapped_install:
-    symlink: $SNAP/usr/bin/install
+  /usr/bin/install:
+    bind-file: $SNAP/usr/bin/install
   /usr/bin/pg_lsclusters:
     symlink: $SNAP/usr/bin/pg_lsclusters
   /usr/bin/pg_ctlcluster:
@@ -158,16 +158,7 @@ parts:
       - coreutils
     override-stage: |
       craftctl default
-      # Use bundled install
-      ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
-        "s/system 'install'/system 'snapped_install'/g"
-      sed -i "s/system 'install'/system 'snapped_install'/g" \
-        $SNAPCRAFT_STAGE/usr/share/perl5/PgCommon.pm
-      sed -i 's/qw(install/qw(snapped_install/g' \
-        $SNAPCRAFT_STAGE/usr/bin/pg_createcluster
-      sed -i "s/system ('install'/system ('snapped_install'/g" \
-        $SNAPCRAFT_STAGE/usr/bin/pg_createcluster
-      # Use tmp for socket and bundled install
+      # Use tmp for socket
       ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
         's/\/var\/run\/postgresql/\/tmp/g'
       sed -i 's/\/var\/run\/postgresql/\/tmp/g' \
