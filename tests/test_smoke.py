@@ -9,7 +9,7 @@ def test_install():
         snapcraft = yaml.safe_load(file)
 
         subprocess.run(
-            f"sudo snap install ./{snapcraft['name']}_{snapcraft['version']}_amd64.snap --devmode".split(),
+            f"sudo snap install ./{snapcraft['name']}_{snapcraft['version']}_amd64.snap --dangerous".split(),
             check=True,
         )
 
