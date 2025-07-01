@@ -1,0 +1,28 @@
+summary: PostgreSQL SNAP smoke tests
+
+execute: |
+  echo "Running smoke test..."
+  postgresql.psql -U postgres -h /tmp -c "SELECT version();"
+
+  echo "Ensure all tools have been shipped.."
+  postgresql.archivecleanup --help
+  postgresql.basebackup --help
+  postgresql.config --help
+  postgresql.conftool --help
+  # postgresql.createcluster --help # Missing --help
+  postgresql.createdb --help
+  # postgresql.createuser --help # Missing --help
+  postgresql.ctl --help
+  postgresql.ctlcluster 16 main status # Missing --help
+  # postgresql.dropcluster --help # Missing --help
+  postgresql.dump --help
+  postgresql.dumpall --help
+  postgresql.isready --help
+  postgresql.lsclusters --help
+  postgresql.pgbench --help
+  postgresql.psql --help
+  postgresql.receivewal --help
+  postgresql.recvlogical --help
+  # postgresql.renamecluster --help # Missing --help
+  postgresql.restore --help
+

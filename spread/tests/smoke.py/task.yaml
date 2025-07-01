@@ -1,0 +1,13 @@
+summary: PostgreSQL smoke Python tests
+
+execute: |
+  snap install astral-uv --classic
+  uv tool install tox
+  uv tool install poetry
+  export PATH="$PATH:$HOME/.local/bin"
+
+  tox run -e smoke
+
+  uv tool uninstall tox
+  uv tool install poetry
+  snap remove astral-uv --purge --terminate

@@ -32,6 +32,15 @@ snapcraft pack
 sudo snap install ./postgresql*.snap --dangerous
 ```
 
+### Testing Snap
+Using [Spread](https://github.com/canonical/spread):
+```bash
+snapcraft test                       # run all tests
+ls -la spread/tests/                 # list all tests
+snapcraft test -- spread/tests/smoke # run one test suite
+snapcraft test --debug               # to open shell for failed test
+```
+
 ## License
 The PostgreSQL Snap is free software, distributed under the Apache
 Software License, version 2.0. See

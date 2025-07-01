@@ -3,18 +3,6 @@ import subprocess
 import time
 import pytest
 
-
-def test_install():
-    with open("snap/snapcraft.yaml") as file:
-        snapcraft = yaml.safe_load(file)
-
-        subprocess.run(
-            f"sudo snap install ./{snapcraft['name']}_{snapcraft['version']}_amd64.snap --dangerous".split(),
-            check=True,
-        )
-
-
-@pytest.mark.run(after="test_install")
 def test_all_apps():
     with open("snap/snapcraft.yaml") as file:
         snapcraft = yaml.safe_load(file)
@@ -48,7 +36,6 @@ def test_all_apps():
                     raise e
 
 
-@pytest.mark.run(after="test_install")
 def test_all_services():
     with open("snap/snapcraft.yaml") as file:
         snapcraft = yaml.safe_load(file)
@@ -76,7 +63,6 @@ def test_all_services():
                     raise e
 
 
-@pytest.mark.run(after="test_install")
 def test_version():
     with open("snap/snapcraft.yaml") as file:
         snapcraft = yaml.safe_load(file)

@@ -1,0 +1,18 @@
+summary: PostgreSQL ctl CLI tests
+
+execute: |
+  echo "Testing createuser, createdb, ctl..."
+
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+
+  postgresql.createuser -U postgres -h /tmp mynewuser
+  postgresql.psql -U postgres -h /tmp -p 5432 -d postgres -c "\du"
+  postgresql.psql -U postgres -h /tmp -p 5432 -d postgres \
+    -c "select * from pg_user where usename='mynewuser'"
+
+  postgresql.createdb -U postgres -h /tmp -p 5432 mydatabase
+  postgresql.psql -U postgres -h /tmp -p 5432 -d postgres -c "\l"
+  postgresql.psql -U postgres -h /tmp -d mydatabase -c "SELECT NOW();"
+
+  postgresql.ctl status -D /var/lib/postgresql/16/main/
+

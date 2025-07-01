@@ -1,6 +1,6 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
-name: Tests
+name: SNAP Build/Tests
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,27 +18,46 @@ jobs:
     name: Build snap
     uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v32.1.0
 
-  smoke:
-    name: Smoke test snap
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+  test:
+    name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
+    timeout-minutes: 10
+    # runs-on: [self-hosted, linux, "${{ matrix.platform.host_arch }}", "${{ matrix.base.codename }}", large]
+    runs-on: "ubuntu-${{ matrix.base.version }}${{ matrix.platform.gh_suffix }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        base:
+          - { codename: jammy, version: 22.04 }
+          - { codename: noble, version: 24.04 }
+        platform:
+          - { os: linux, arch: amd64, host_arch: x64, gh_suffix: "" }
+          - { os: linux, arch: arm64, host_arch: arm64, gh_suffix: "-arm" }
     needs:
       - lint
       - build
     steps:
-      - name: Uninstall Postgresql
-        run: |
-          sudo apt --purge remove postgresql*
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install tox & poetry
-        run: |
-          pipx install tox
-          pipx install poetry
       - name: Download snap package(s)
         uses: actions/download-artifact@v4
         with:
-          pattern: ${{ needs.build.outputs.artifact-prefix }}-*
+          pattern: ${{ needs.build.outputs.artifact-prefix }}-*-${{ matrix.platform.arch }}
           merge-multiple: true
+      - name: Add pipx to PATH
+        run: |
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "/root/.local/bin" >> "${GITHUB_PATH}"
       - name: Run tests
-        run: tox run -e smoke
+        run: |
+          # lxd is necessary for spread
+          sudo snap install lxd
+          sudo adduser "$USER" lxd
+          # `newgrp` does not work in GitHub Actions; use `sudo --user` instead
+          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd waitready
+          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd init --auto
+          # Workaround for Docker & LXD on same machine
+          sudo iptables -F FORWARD
+          sudo iptables -P FORWARD ACCEPT
+
+          sudo snap install snapcraft --classic
+          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- snapcraft test
