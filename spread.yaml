@@ -11,7 +11,7 @@ suites:
   spread/tests/:
     summary: General integration tests
     prepare: |
-      sudo apt --purge remove postgresql*
+      apt --purge remove postgresql*
     prepare-each: |
       snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
     restore-each: |

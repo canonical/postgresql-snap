@@ -2,7 +2,9 @@ summary: PostgreSQL SNAP smoke tests
 
 execute: |
   echo "Running smoke test..."
-  postgresql.psql -U postgres -h /tmp -c "SELECT version();"
+  SNAP_VERSION=$(awk -F\' '/version/{print $2}' "${PROJECT_PATH}"/snap/snapcraft.yaml)
+  postgresql.psql -U postgres -h /tmp -c "SELECT version();" | \
+    grep "^ PostgreSQL ${SNAP_VERSION:-error}"
 
   echo "Ensure all tools have been shipped.."
   postgresql.archivecleanup --help
