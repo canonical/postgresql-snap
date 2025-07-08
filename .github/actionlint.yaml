@@ -1,0 +1,10 @@
+self-hosted-runner:
+  labels:
+    - self-hosted
+    - linux
+    - x64
+    - arm64
+    - amd64
+    - large
+    - jammy
+    - noble

@@ -1,0 +1,10 @@
+summary: PostgreSQL isready CLI tests
+
+execute: |
+  echo "Testing isready..."
+
+  postgresql.isready
+
+  postgresql.isready -h /tmp -p 5432
+
+  postgresql.isready -h /tmp -p 5555 && exit 1 || true # failure expected

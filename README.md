@@ -29,7 +29,16 @@ instead of the `--devmode` one. See snap [installation modes](https://snapcraft.
 
 ```bash
 snapcraft pack
-sudo snap install ./postgresql*.snap --dangerous
+sudo snap install ./postgresql*.snap --dangerous --jailmode
+```
+
+### Testing Snap
+Using [Spread](https://github.com/canonical/spread):
+```bash
+snapcraft test                       # run all tests
+ls -la spread/tests/                 # list all tests
+snapcraft test -- spread/tests/smoke # run one test suite
+snapcraft test --debug               # to open shell for failed test
 ```
 
 ## License

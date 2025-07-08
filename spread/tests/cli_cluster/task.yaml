@@ -1,0 +1,30 @@
+summary: PostgreSQL cluster CLIs tests
+
+execute: |
+  echo "Testing *cluster ..."
+
+  postgresql.lsclusters
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+
+  postgresql.ctlcluster --skip-systemctl-redirect 16 main status
+  postgresql.ctlcluster --skip-systemctl-redirect 16 main stop
+  postgresql.ctlcluster --skip-systemctl-redirect 16 main status && exit 1 || true # failure expected
+  postgresql.ctlcluster --skip-systemctl-redirect 16 main start
+  postgresql.ctlcluster --skip-systemctl-redirect 16 main status
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+
+  postgresql.createcluster 16 test1
+  postgresql.lsclusters 16 test1
+  postgresql.ctlcluster --skip-systemctl-redirect 16 test1 start
+  postgresql.lsclusters 16 test1
+  postgresql.psql -U postgres -h /tmp -p 5433 -d postgres -c "SELECT NOW();"
+
+  postgresql.lsclusters 16
+  postgresql.renamecluster 16 test1 test123
+  postgresql.lsclusters 16
+
+
+  postgresql.lsclusters 16 test123
+  postgresql.dropcluster --stop 16 test123
+  postgresql.lsclusters 16 test123 && exit 1 || true # failure expected
+  

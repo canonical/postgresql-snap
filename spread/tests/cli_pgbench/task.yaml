@@ -1,0 +1,9 @@
+summary: PostgreSQL pgbench CLI tests
+
+execute: |
+  echo "Testing pgbench..."
+
+  postgresql.createdb -U postgres -h /tmp -p 5432 mybench
+
+  postgresql.pgbench -U postgres -h /tmp -p 5432 -d mybench --initialize
+  postgresql.pgbench -U postgres -h /tmp -p 5432 -d mybench -T 10

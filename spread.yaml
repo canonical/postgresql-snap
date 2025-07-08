@@ -1,0 +1,23 @@
+project: postgresql-snap
+
+backends:
+  craft:
+    type: craft
+    systems:
+      - ubuntu-24.04
+      - ubuntu-22.04
+
+suites:
+  spread/tests/:
+    summary: General integration tests
+    prepare: |
+      apt --purge remove postgresql*
+    prepare-each: |
+      snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
+    restore-each: |
+      snap remove postgresql --purge --terminate
+
+exclude:
+  - .git
+
+kill-timeout: 1h
