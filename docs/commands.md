@@ -1,12 +1,7 @@
 # Commands
 
-The [PostgreSQL snap](https://snapcraft.io/postgresql) ships a set of useful tools for managing your application:
-* Clients to connect to PostgreSQL
-* Tools to manage a PostgreSQL cluster
-* Tools to manage a PostgreSQL instance
-* Tools for PostgreSQL health checks
-* Tools to configure PostgreSQL
-* Tools to back up and restore PostgreSQL
+The [PostgreSQL snap](https://snapcraft.io/postgresql) ships a set of useful tools for managing your application - including cluster management, health checks, backups, and more.
+
 
 ## PostgreSQL clients
 
