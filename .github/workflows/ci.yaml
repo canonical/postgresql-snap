@@ -37,9 +37,9 @@ jobs:
       - build
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download snap package(s)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*-${{ matrix.platform.arch }}
           merge-multiple: true
