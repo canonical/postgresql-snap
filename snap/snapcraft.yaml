@@ -75,8 +75,6 @@ apps:
     command: usr/bin/createuser
   archivecleanup:
     command: archivecleanup.sh
-  # buildext:
-  #   command: usr/bin/pg_buildext
   createcluster:
     command: create-cluster.sh
     plugs:
@@ -89,10 +87,6 @@ apps:
     command: usr/bin/pg_restore
     plugs:
       - network
-  # upgradecluster:
-  #   command: usr/bin/pg_upgradecluster
-  # backupcluster:
-  #   command: usr/bin/pg_backupcluster
   config:
     command: usr/bin/pg_config
   dump:
@@ -103,10 +97,6 @@ apps:
     command: usr/bin/pg_lsclusters
   recvlogical:
     command: usr/bin/pg_recvlogical
-  # restorecluster:
-  #   command: usr/bin/pg_restorecluster
-  # virtualenv:
-  #   command: usr/bin/pg_virtualenv
   basebackup:
     command: usr/bin/pg_basebackup
   conftool:
@@ -132,8 +122,6 @@ apps:
     plugs:
       - network
       - network-bind
-  # updatedicts:
-  #   command: usr/sbin/pg_updatedicts
   pgbench:
     command: usr/bin/pgbench
   psql:
