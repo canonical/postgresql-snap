@@ -19,6 +19,17 @@ plugs:
   shared-memory:
     private: true
 
+# This slot exposes all of this snap to any other snap to use postgresql without
+# bundling any of postgresql. This allows multiple snaps to use the postgresql
+# snap however they see fit, without duplicating postgresql files on the device
+# (by bundling postgresql with every snap)
+slots:
+  postgresql:
+    interface: content
+    content: bins
+    read:
+      - $SNAP
+
 hooks:
   install:
     plugs:
@@ -75,8 +86,6 @@ apps:
     command: usr/bin/createuser
   archivecleanup:
     command: archivecleanup.sh
-  # buildext:
-  #   command: usr/bin/pg_buildext
   createcluster:
     command: create-cluster.sh
     plugs:
@@ -89,10 +98,6 @@ apps:
     command: usr/bin/pg_restore
     plugs:
       - network
-  # upgradecluster:
-  #   command: usr/bin/pg_upgradecluster
-  # backupcluster:
-  #   command: usr/bin/pg_backupcluster
   config:
     command: usr/bin/pg_config
   dump:
@@ -103,10 +108,6 @@ apps:
     command: usr/bin/pg_lsclusters
   recvlogical:
     command: usr/bin/pg_recvlogical
-  # restorecluster:
-  #   command: usr/bin/pg_restorecluster
-  # virtualenv:
-  #   command: usr/bin/pg_virtualenv
   basebackup:
     command: usr/bin/pg_basebackup
   conftool:
@@ -132,8 +133,6 @@ apps:
     plugs:
       - network
       - network-bind
-  # updatedicts:
-  #   command: usr/sbin/pg_updatedicts
   pgbench:
     command: usr/bin/pgbench
   psql:
