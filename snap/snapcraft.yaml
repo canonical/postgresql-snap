@@ -19,6 +19,17 @@ plugs:
   shared-memory:
     private: true
 
+# This slot exposes all of this snap to any other snap to use postgresql without
+# bundling any of postgresql. This allows multiple snaps to use the postgresql
+# snap however they see fit, without duplicating postgresql files on the device
+# (by bundling postgresql with every snap)
+slots:
+  postgresql:
+    interface: content
+    content: bins
+    read:
+      - $SNAP
+
 hooks:
   install:
     plugs:
