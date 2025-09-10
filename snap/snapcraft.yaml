@@ -152,7 +152,7 @@ parts:
   postgres-debs:
     plugin: nil
     stage-packages:
-      - postgresql=16+257build1
+      - postgresql=16+257build1.1
       - util-linux
       - locales-all
       - coreutils
