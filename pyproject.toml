@@ -23,7 +23,7 @@ optional = true
 
 [tool.poetry.group.unit.dependencies]
 pytest = "^8.4.2"
-pyyaml = "^6.0.2"
+pyyaml = "^6.0.3"
 
 [tool.pytest.ini_options]
 markers = ["run"]
