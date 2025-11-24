@@ -70,5 +70,6 @@ def test_version():
             subprocess.check_output([f"{snapcraft['name']}.isready", "--version"])
             .decode()
             .split(" ")[2]
+            .strip()
         )
         assert snap_version == app_version
