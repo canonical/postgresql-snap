@@ -3,28 +3,28 @@ summary: PostgreSQL SNAP smoke tests
 execute: |
   echo "Running smoke test..."
   SNAP_VERSION=$(awk -F\' '/version/{print $2}' "${PROJECT_PATH}"/snap/snapcraft.yaml)
-  postgresql.psql -U postgres -h /tmp -c "SELECT version();" | \
+  sd-postgresql.psql -U postgres -h /tmp -c "SELECT version();" | \
     grep "^ PostgreSQL ${SNAP_VERSION:-error}"
 
   echo "Ensure all tools have been shipped.."
-  postgresql.archivecleanup --help
-  postgresql.basebackup --help
-  postgresql.config --help
-  postgresql.conftool --help
-  # postgresql.createcluster --help # Missing --help
-  postgresql.createdb --help
-  # postgresql.createuser --help # Missing --help
-  postgresql.ctl --help
-  postgresql.ctlcluster 18 main status # Missing --help
-  # postgresql.dropcluster --help # Missing --help
-  postgresql.dump --help
-  postgresql.dumpall --help
-  postgresql.isready --help
-  postgresql.lsclusters --help
-  postgresql.pgbench --help
-  postgresql.psql --help
-  postgresql.receivewal --help
-  postgresql.recvlogical --help
-  # postgresql.renamecluster --help # Missing --help
-  postgresql.restore --help
+  sd-postgresql.archivecleanup --help
+  sd-postgresql.basebackup --help
+  sd-postgresql.config --help
+  sd-postgresql.conftool --help
+  # sd-postgresql.createcluster --help # Missing --help
+  sd-postgresql.createdb --help
+  # sd-postgresql.createuser --help # Missing --help
+  sd-postgresql.ctl --help
+  sd-postgresql.ctlcluster 18 main status # Missing --help
+  # sd-postgresql.dropcluster --help # Missing --help
+  sd-postgresql.dump --help
+  sd-postgresql.dumpall --help
+  sd-postgresql.isready --help
+  sd-postgresql.lsclusters --help
+  sd-postgresql.pgbench --help
+  sd-postgresql.psql --help
+  sd-postgresql.receivewal --help
+  sd-postgresql.recvlogical --help
+  # sd-postgresql.renamecluster --help # Missing --help
+  sd-postgresql.restore --help
 

@@ -1,4 +1,4 @@
-name: postgresql
+name: sd-postgresql
 base: core24
 version: '18.1'
 summary: PostgreSQL in a snap.
