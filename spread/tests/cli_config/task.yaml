@@ -4,5 +4,5 @@ execute: |
   echo "Testing config tools..."
 
   postgresql.config
-  postgresql.conftool 16 main show max_connections
-  postgresql.conftool 16 main show all
+  postgresql.conftool 18 main show max_connections
+  postgresql.conftool 18 main show all
