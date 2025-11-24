@@ -2,7 +2,7 @@ summary: PostgreSQL storage tests
 
 execute: |
   echo "Creating test data..."
-  postgresql.psql -U postgres -h /tmp -c "
+  sd-postgresql.psql -U postgres -h /tmp -c "
     CREATE TABLE test (id SERIAL PRIMARY KEY, name TEXT);
     INSERT INTO test (name) VALUES ('test1');
     SELECT * from test;
@@ -12,26 +12,26 @@ execute: |
   mkdir -p /srv/mypgdata/data /srv/mypgdata/logs
 
   echo "Stop PostgreSQL DB to move data..."
-  snap stop postgresql.postgresql
+  snap stop sd-postgresql.postgresql
 
   echo "Move current data/logs..."
-  cp -a /var/snap/postgresql/common/var/lib/postgresql/* /srv/mypgdata/data
-  cp -a /var/snap/postgresql/common/var/log/postgresql/* /srv/mypgdata/logs
+  cp -a /var/snap/sd-postgresql/common/var/lib/postgresql/* /srv/mypgdata/data
+  cp -a /var/snap/sd-postgresql/common/var/log/postgresql/* /srv/mypgdata/logs
 
   echo "Mount data/logs storage inside SNAP..."
-  mount --bind /srv/mypgdata/data /var/snap/postgresql/common/var/lib/postgresql
-  mount --bind /srv/mypgdata/logs /var/snap/postgresql/common/var/log/postgresql
+  mount --bind /srv/mypgdata/data /var/snap/sd-postgresql/common/var/lib/postgresql
+  mount --bind /srv/mypgdata/logs /var/snap/sd-postgresql/common/var/log/postgresql
 
   echo "Start PostgreSQL DB..."
-  snap start postgresql.postgresql
-  timeout 10 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  snap start sd-postgresql.postgresql
+  timeout 10 /bin/bash -c "while ! sd-postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
 
   echo "Checking test data aftert in new location..."
-  postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"
+  sd-postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"
 
   echo "Cleaning PG mounts to purge SNAP on spread restore"
-  snap stop postgresql.postgresql
-  umount /var/snap/postgresql/common/var/lib/postgresql
-  umount /var/snap/postgresql/common/var/log/postgresql
+  snap stop sd-postgresql.postgresql
+  umount /var/snap/sd-postgresql/common/var/lib/postgresql
+  umount /var/snap/sd-postgresql/common/var/log/postgresql
 
   echo "Storage test completed."
