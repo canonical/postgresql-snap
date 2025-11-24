@@ -1,6 +1,7 @@
 name: postgresql
-base: core24
-version: '16.10'
+base: core26
+build-base: devel # TODO: remove before stable release
+version: '18.1'
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
@@ -9,7 +10,7 @@ description: |
 platforms:
   amd64:
   arm64:
-grade: stable
+grade: devel # TODO: switch to stable before release
 confinement: strict
 
 system-usernames:
@@ -64,8 +65,8 @@ layout:
     bind: $SNAP/usr/share/perl
   /usr/local/lib/site_perl:
     bind: $SNAP/usr/local/lib/site_perl
-  /usr/lib/postgresql/16:
-    bind: $SNAP/usr/lib/postgresql/16
+  /usr/lib/postgresql/18:
+    bind: $SNAP/usr/lib/postgresql/18
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
   /etc/postgresql:
@@ -141,7 +142,7 @@ apps:
       - network
   postgresql:
     command: >-
-      ctl-cluster.sh --skip-systemctl-redirect --foreground 16 main start
+      ctl-cluster.sh --skip-systemctl-redirect --foreground 18 main start
     daemon: simple
     plugs:
       - network
@@ -151,7 +152,7 @@ parts:
   postgres-debs:
     plugin: nil
     stage-packages:
-      - postgresql=16+257build1.1
+      - postgresql-18
       - util-linux
       - locales-all
       - coreutils
