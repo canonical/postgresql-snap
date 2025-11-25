@@ -17,6 +17,8 @@ jobs:
   build:
     name: Build snap
     uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@core26
+    with:
+      snapcraft-snap-channel: latest/edge
 
   test:
     name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
