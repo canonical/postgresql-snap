@@ -12,11 +12,11 @@ on:
 jobs:
   lint:
     name: Lint
-    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v38.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v40.0.0
 
   build:
     name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v38.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v40.0.0
 
   test:
     name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
