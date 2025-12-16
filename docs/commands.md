@@ -11,7 +11,7 @@ The [PostgreSQL snap](https://snapcraft.io/postgresql) ships a set of useful too
 
 ```shell
 > postgresql.psql -U postgres -h /tmp
-psql (16.8 (Ubuntu 16.8-0ubuntu0.24.04.1))
+psql (18.1 (Ubuntu 18.1-2))
 Type "help" for help.
 
 postgres=# \du+
@@ -37,28 +37,28 @@ Those tools are Ubuntu/Debian-specific wrappers around '[initdb](https://www.pos
 ```shell
 > postgresql.lsclusters
 Ver Cluster Port Status Owner    Data directory                 Log file
-16  main    5432 online _daemon_ /var/lib/postgresql/16/main2   /var/log/postgresql/postgresql-16-main2.log
-16  test    5434 online _daemon_ /var/lib/postgresql/16/test    /var/log/postgresql/postgresql-16-test.log
-16  test1   5433 online _daemon_ /var/lib/postgresql/16/test1   /var/log/postgresql/postgresql-16-test1.log
-16  test123 5435 online _daemon_ /var/lib/postgresql/16/test123 /var/log/postgresql/postgresql-16-test123.log
+18  main    5432 online _daemon_ /var/lib/postgresql/18/main2   /var/log/postgresql/postgresql-18-main.log
+18  test    5434 online _daemon_ /var/lib/postgresql/18/test    /var/log/postgresql/postgresql-18-test.log
+18  test1   5433 online _daemon_ /var/lib/postgresql/18/test1   /var/log/postgresql/postgresql-18-test1.log
+18  test123 5435 online _daemon_ /var/lib/postgresql/18/test123 /var/log/postgresql/postgresql-18-test123.log
 ```
 </details>
 
 <details><summary>Example for <code>postgresql.ctlcluster</code></summary>
 
 ```shell
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 16 main status
+> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main status
 pg_ctl: server is running (PID: 41805)
 ...
 
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 16 main stop
+> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main stop
 
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 16 main status
+> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main status
 pg_ctl: no server running
 
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 16 main start
+> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main start
 
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 16 main status
+> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main status
 pg_ctl: server is running (PID: 42101)
 ...
 ```
@@ -71,23 +71,23 @@ Usage: postgresql.ctlcluster <version> <cluster> <action> [-- <pg_ctl options>]
 <details><summary>Example for <code>postgresql.createcluster</code></summary>
 
 ```shell
-> sudo postgresql.createcluster 16 test1
-Creating new PostgreSQL cluster 16/test1
+> sudo postgresql.createcluster 18 test1
+Creating new PostgreSQL cluster 18/test1
 ...
-The cluster can be started with: 'postgresql.ctlcluster --skip-systemctl-redirect 16 test1 start'
+The cluster can be started with: 'postgresql.ctlcluster --skip-systemctl-redirect 18 test1 start'
 
-> postgresql.lsclusters 16 test1
+> postgresql.lsclusters 18 test1
 Ver Cluster Port Status Owner    Data directory               Log file
-16  test1   5435 down   _daemon_ /var/lib/postgresql/16/test1 /var/log/postgresql/postgresql-16-test1.log
+18  test1   5435 down   _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
 
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 16 test1 start
+> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 test1 start
 
-> postgresql.lsclusters 16 test1
+> postgresql.lsclusters 18 test1
 Ver Cluster Port Status Owner    Data directory               Log file
-16  test1   5435 online _daemon_ /var/lib/postgresql/16/test1 /var/log/postgresql/postgresql-16-test1.log
+18  test1   5435 online _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
 
 > postgresql.psql -U postgres -h /tmp -p 5435 -d postgres
-psql (16.8 (Ubuntu 16.8-0ubuntu0.24.04.1))
+psql (18.1 (Ubuntu 18.1-2))
 Type "help" for help.
 
 postgres=# 
@@ -97,37 +97,37 @@ postgres=#
 <details><summary>Example for <code>postgresql.renamecluster</code></summary>
 
 ```shell
-> postgresql.lsclusters 16
+> postgresql.lsclusters 18
 Ver Cluster Port Status Owner    Data directory               Log file
-16  main    5432 online _daemon_ /var/lib/postgresql/16/main  /var/log/postgresql/postgresql-16-main.log
-16  test1   5433 online _daemon_ /var/lib/postgresql/16/test1 /var/log/postgresql/postgresql-16-test1.log
+18  main    5432 online _daemon_ /var/lib/postgresql/18/main  /var/log/postgresql/postgresql-18-main.log
+18  test1   5433 online _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
 
-> sudo postgresql.renamecluster 16 test1 test123
-Stopping cluster 16 test1 ...
+> sudo postgresql.renamecluster 18 test1 test123
+Stopping cluster 18 test1 ...
 Warning: systemd does not know about the new cluster yet. Operations like "service postgresql start" will not handle it. To fix, run:
   sudo systemctl daemon-reload
-Starting cluster 16 test123 ...
+Starting cluster 18 test123 ...
 Warning: the cluster will not be running as a systemd service. Consider using systemctl:
-  sudo systemctl start postgresql@16-test123
+  sudo systemctl start postgresql@18-test123
 
-> postgresql.lsclusters 16
+> postgresql.lsclusters 18
 Ver Cluster Port Status Owner    Data directory                 Log file
-16  main    5432 online _daemon_ /var/lib/postgresql/16/main    /var/log/postgresql/postgresql-16-main.log
-16  test123 5433 online _daemon_ /var/lib/postgresql/16/test123 /var/log/postgresql/postgresql-16-test123.log
+18  main    5432 online _daemon_ /var/lib/postgresql/18/main    /var/log/postgresql/postgresql-18-main.log
+18  test123 5433 online _daemon_ /var/lib/postgresql/18/test123 /var/log/postgresql/postgresql-18-test123.log
 ```
 </details>
 
 <details><summary>Example for <code>postgresql.dropcluster</code></summary>
 
 ```shell
-> postgresql.lsclusters 16 test123
+> postgresql.lsclusters 18 test123
 Ver Cluster   Port Status Owner    Data directory               Log file
-16  test123   5433 online _daemon_ /var/lib/postgresql/16/test1 /var/log/postgresql/postgresql-16-test1.log
+18  test123   5433 online _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
 
-> sudo postgresql.dropcluster --stop 16 test123
+> sudo postgresql.dropcluster --stop 18 test123
 
-> postgresql.lsclusters 16 test123
-Error: Cluster 16 test123 does not exist
+> postgresql.lsclusters 18 test123
+Error: Cluster 18 test123 does not exist
 ```
 </details>
 
@@ -168,14 +168,14 @@ Error: Cluster 16 test123 does not exist
 <details><summary>Example for <code>postgresql.ctl</code></summary>
 
 ```shell
->  sudo postgresql.ctl status -D /var/lib/postgresql/16/main/
+>  sudo postgresql.ctl status -D /var/lib/postgresql/18/main/
 pg_ctl: server is running (PID: 1690)
-/usr/lib/postgresql/16/bin/postgres "-c" "config_file=/etc/postgresql/16/main/postgresql.conf"
+/usr/lib/postgresql/18/bin/postgres "-c" "config_file=/etc/postgresql/18/main/postgresql.conf"
 
-> sudo postgresql.ctl restart -D /var/lib/postgresql/16/main/
+> sudo postgresql.ctl restart -D /var/lib/postgresql/18/main/
 waiting for server to shut down.... done
 server stopped
-waiting for server to start....2025-07-01 21:13:15.019 UTC [51249] LOG:  starting PostgreSQL 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1) on riscv64-unknown-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+waiting for server to start....2025-07-01 21:13:15.019 UTC [51249] LOG:  starting PostgreSQL 18.1 (Ubuntu 18.1-2)...
 2025-07-01 21:13:15.020 UTC [51249] LOG:  listening on IPv6 address "::1", port 5432
 2025-07-01 21:13:15.020 UTC [51249] LOG:  listening on IPv4 address "127.0.0.1", port 5432
 2025-07-01 21:13:15.033 UTC [51249] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
@@ -239,20 +239,20 @@ tps = 110.587085 (without initial connection time)
 
 ```shell
 > postgresql.config
-BINDIR = /usr/lib/postgresql/16/bin
-DOCDIR = /usr/share/doc/postgresql-doc-16
-HTMLDIR = /usr/share/doc/postgresql-doc-16
+BINDIR = /usr/lib/postgresql/18/bin
+DOCDIR = /usr/share/doc/postgresql-doc-18
+HTMLDIR = /usr/share/doc/postgresql-doc-18
 INCLUDEDIR = /usr/include/postgresql
 PKGINCLUDEDIR = /usr/include/postgresql
-INCLUDEDIR-SERVER = /usr/include/postgresql/16/server
+INCLUDEDIR-SERVER = /usr/include/postgresql/18/server
 LIBDIR = /usr/lib/riscv64-linux-gnu
-PKGLIBDIR = /usr/lib/postgresql/16/lib
+PKGLIBDIR = /usr/lib/postgresql/18/lib
 LOCALEDIR = /usr/share/locale
-MANDIR = /usr/share/postgresql/16/man
-SHAREDIR = /usr/share/postgresql/16
+MANDIR = /usr/share/postgresql/18/man
+SHAREDIR = /usr/share/postgresql/18
 SYSCONFDIR = /etc/postgresql-common
-PGXS = /usr/lib/postgresql/16/lib/pgxs/src/makefiles/pgxs.mk
-CONFIGURE =  '--build=riscv64-linux-gnu' '--prefix=/usr' '--includedir=${prefix}/include' '--mandir=${prefix}/share/man' '--infodir=${prefix}/share/info' '--sysconfdir=/etc' '--localstatedir=/var' '--disable-option-checking' '--disable-silent-rules' '--libdir=${prefix}/lib/riscv64-linux-gnu' '--runstatedir=/run' '--disable-maintainer-mode' '--disable-dependency-tracking' '--with-tcl' '--with-perl' '--with-python' '--with-pam' '--with-openssl' '--with-libxml' '--with-libxslt' '--mandir=/usr/share/postgresql/16/man' '--docdir=/usr/share/doc/postgresql-doc-16' '--sysconfdir=/etc/postgresql-common' '--datarootdir=/usr/share/' '--datadir=/usr/share/postgresql/16' '--bindir=/usr/lib/postgresql/16/bin' '--libdir=/usr/lib/riscv64-linux-gnu/' '--libexecdir=/usr/lib/postgresql/' '--includedir=/usr/include/postgresql/' '--with-extra-version= (Ubuntu 16.8-0ubuntu0.24.04.1)' '--enable-nls' '--enable-thread-safety' '--enable-debug' '--enable-dtrace' '--disable-rpath' '--with-uuid=e2fs' '--with-gnu-ld' '--with-gssapi' '--with-ldap' '--with-pgport=5432' '--with-system-tzdata=/usr/share/zoneinfo' 'AWK=mawk' 'MKDIR_P=/bin/mkdir -p' 'PROVE=/usr/bin/prove' 'PYTHON=/usr/bin/python3' 'TAR=/bin/tar' 'XSLTPROC=xsltproc --nonet' 'CFLAGS=-g -O2 -fno-omit-frame-pointer -fstack-protector-strong -Wformat -Werror=format-security -fno-stack-clash-protection' 'LDFLAGS=-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now' '--enable-tap-tests' '--with-icu' '--with-lz4' '--with-zstd' '--with-systemd' '--with-selinux' 'build_alias=riscv64-linux-gnu' 'CPPFLAGS=-Wdate-time -D_FORTIFY_SOURCE=3' 'CXXFLAGS=-g -O2 -fno-omit-frame-pointer -fstack-protector-strong -Wformat -Werror=format-security -fno-stack-clash-protection'
+PGXS = /usr/lib/postgresql/18/lib/pgxs/src/makefiles/pgxs.mk
+CONFIGURE =  '--build=riscv64-linux-gnu' '--prefix=/usr' '--includedir=${prefix}/include' '--mandir=${prefix}/share/man' '--infodir=${prefix}/share/info' '--sysconfdir=/etc' '--localstatedir=/var' '--disable-option-checking' '--disable-silent-rules' '--libdir=${prefix}/lib/riscv64-linux-gnu' '--runstatedir=/run' '--disable-maintainer-mode' '--disable-dependency-tracking' '--with-tcl' '--with-perl' '--with-python' '--with-pam' '--with-openssl' '--with-libxml' '--with-libxslt' '--mandir=/usr/share/postgresql/18/man' '--docdir=/usr/share/doc/postgresql-doc-18' '--sysconfdir=/etc/postgresql-common' '--datarootdir=/usr/share/' '--datadir=/usr/share/postgresql/18' '--bindir=/usr/lib/postgresql/18/bin' '--libdir=/usr/lib/riscv64-linux-gnu/' '--libexecdir=/usr/lib/postgresql/' '--includedir=/usr/include/postgresql/' '--with-extra-version= (Ubuntu 18.1-2)' '--enable-nls' '--enable-thread-safety' '--enable-debug' '--enable-dtrace' '--disable-rpath' '--with-uuid=e2fs' '--with-gnu-ld' '--with-gssapi' '--with-ldap' '--with-pgport=5432' '--with-system-tzdata=/usr/share/zoneinfo' 'AWK=mawk' 'MKDIR_P=/bin/mkdir -p' 'PROVE=/usr/bin/prove' 'PYTHON=/usr/bin/python3' 'TAR=/bin/tar' 'XSLTPROC=xsltproc --nonet' 'CFLAGS=-g -O2 -fno-omit-frame-pointer -fstack-protector-strong -Wformat -Werror=format-security -fno-stack-clash-protection' 'LDFLAGS=-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now' '--enable-tap-tests' '--with-icu' '--with-lz4' '--with-zstd' '--with-systemd' '--with-selinux' 'build_alias=riscv64-linux-gnu' 'CPPFLAGS=-Wdate-time -D_FORTIFY_SOURCE=3' 'CXXFLAGS=-g -O2 -fno-omit-frame-pointer -fstack-protector-strong -Wformat -Werror=format-security -fno-stack-clash-protection'
 CC = gcc
 CPPFLAGS = -Wdate-time -D_FORTIFY_SOURCE=3 -D_GNU_SOURCE -I/usr/include/libxml2
 CFLAGS = -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fno-omit-frame-pointer -fstack-protector-strong -Wformat -Werror=format-security -fno-stack-clash-protection
@@ -261,24 +261,24 @@ LDFLAGS = -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -Wl,--as-needed
 LDFLAGS_EX = 
 LDFLAGS_SL = 
 LIBS = -lpgcommon -lpgport -lselinux -lzstd -llz4 -lxslt -lxml2 -lpam -lssl -lcrypto -lgssapi_krb5 -lz -lreadline -lm 
-VERSION = PostgreSQL 16.8 (Ubuntu 16.8-0ubuntu0.24.04.1)
+VERSION = PostgreSQL 18.1 (Ubuntu 18.1-2)
 ```
 </details>
 
 <details><summary>Example for <code>postgresql.conftool</code></summary>
 
 ```shell
-> postgresql.conftool 16 main show max_connections
+> postgresql.conftool 18 main show max_connections
 max_connections = 100
 
-> postgresql.conftool 16 test1 show all
-data_directory = '/var/lib/postgresql/16/test1'
+> postgresql.conftool 18 test1 show all
+data_directory = '/var/lib/postgresql/18/test1'
 datestyle = 'iso, mdy'
 default_text_search_config = 'pg_catalog.english'
 dynamic_shared_memory_type = posix
-external_pid_file = '/tmp/16-test1.pid'
-hba_file = '/etc/postgresql/16/test1/pg_hba.conf'
-ident_file = '/etc/postgresql/16/test1/pg_ident.conf'
+external_pid_file = '/tmp/18-test1.pid'
+hba_file = '/etc/postgresql/18/test1/pg_hba.conf'
+ident_file = '/etc/postgresql/18/test1/pg_ident.conf'
 lc_messages = 'C.UTF-8'
 lc_monetary = 'C.UTF-8'
 lc_numeric = 'C.UTF-8'
@@ -292,7 +292,7 @@ shared_buffers = 128MB
 timezone = UTC
 unix_socket_directories = '/tmp'
 
-> postgresql.conftool 16 main edit
+> postgresql.conftool 18 main edit
 ...
 ```
 </details>
@@ -384,11 +384,11 @@ Reuse slot:
 <details><summary>Example for <code>postgresql.recvlogical</code></summary>
 
 ```shell
-> postgresql.conftool 16 main edit # set wal_level=logical !
+> postgresql.conftool 18 main edit # set wal_level=logical !
 
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 16 main restart
+> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main restart
 
-> postgresql.conftool 16 main show wal_level
+> postgresql.conftool 18 main show wal_level
 wal_level = logical
 
 > postgresql.recvlogical -U postgres -d mybench --create-slot -S myslot1
