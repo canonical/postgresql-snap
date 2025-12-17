@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+
+set -euo pipefail
 
 if [ "${EUID}" != "0" ]; then
   echo "Error: run it as root (to utilize snap user _daemon_)." >&2
@@ -76,16 +77,16 @@ for ((i=0; i<"${#INITDB_ARGS[@]}"; ++i)); do
     esac
 done
 
-if [ -z "$PG_USER" ]; then
+if [ -z "${PG_USER:-}" ]; then
     INITDB_ARGS+=('-U')
     INITDB_ARGS+=('postgres')
 fi
 
-if [ -z "$LOCAL_AUTH" ]; then
+if [ -z "${LOCAL_AUTH:-}" ]; then
     INITDB_ARGS+=('--auth-local=trust')
 fi
 
-if [ -z "$HOST_AUTH" ]; then
+if [ -z "${HOST_AUTH:-}" ]; then
     INITDB_ARGS+=('--auth-host=scram-sha-256')
 fi
 

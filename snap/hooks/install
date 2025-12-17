@@ -1,4 +1,7 @@
 #!/bin/bash
+# $SNAP        = /snap/postgresql/<revision>         # RO on runtime
+# $SNAP_COMMON = /var/snap/postgresql/common         # RW on runtime
+# $SNAP_DATA   = /var/snap/postgresql/<revision>     # RW on runtime
 
 mkdir -p "$SNAP_COMMON/etc/postgresql/"
 cp -r "$SNAP/default-config/etc/postgresql-common" "$SNAP_COMMON/etc"
