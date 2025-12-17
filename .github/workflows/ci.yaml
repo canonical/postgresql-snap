@@ -39,7 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Download snap package(s)
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*-${{ matrix.platform.arch }}
           merge-multiple: true
