@@ -27,7 +27,7 @@ jobs:
       - build
     uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge_sd.yaml@sd-env-production
     with:
-      track: '18-26.04'
+      track: '19-26.04'
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
     secrets:
       snap-store-token: ${{ secrets.SNAP_STORE_TOKEN_EDGE }}
