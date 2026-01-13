@@ -6,25 +6,25 @@ execute: |
   sd-postgresql.lsclusters
   sd-postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
 
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main status
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main stop
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main status && exit 1 || true # failure expected
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main start
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main status
+  sd-postgresql.ctlcluster --skip-systemctl-redirect 19 main status
+  sd-postgresql.ctlcluster --skip-systemctl-redirect 19 main stop
+  sd-postgresql.ctlcluster --skip-systemctl-redirect 19 main status && exit 1 || true # failure expected
+  sd-postgresql.ctlcluster --skip-systemctl-redirect 19 main start
+  sd-postgresql.ctlcluster --skip-systemctl-redirect 19 main status
   sd-postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
 
-  sd-postgresql.createcluster 18 test1
-  sd-postgresql.lsclusters 18 test1
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 test1 start
-  sd-postgresql.lsclusters 18 test1
+  sd-postgresql.createcluster 19 test1
+  sd-postgresql.lsclusters 19 test1
+  sd-postgresql.ctlcluster --skip-systemctl-redirect 19 test1 start
+  sd-postgresql.lsclusters 19 test1
   sd-postgresql.psql -U postgres -h /tmp -p 5433 -d postgres -c "SELECT NOW();"
 
-  sd-postgresql.lsclusters 18
-  sd-postgresql.renamecluster 18 test1 test123
-  sd-postgresql.lsclusters 18
+  sd-postgresql.lsclusters 19
+  sd-postgresql.renamecluster 19 test1 test123
+  sd-postgresql.lsclusters 19
 
 
-  sd-postgresql.lsclusters 18 test123
-  sd-postgresql.dropcluster --stop 18 test123
-  sd-postgresql.lsclusters 18 test123 && exit 1 || true # failure expected
+  sd-postgresql.lsclusters 19 test123
+  sd-postgresql.dropcluster --stop 19 test123
+  sd-postgresql.lsclusters 19 test123 && exit 1 || true # failure expected
   

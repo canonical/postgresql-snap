@@ -15,7 +15,7 @@ execute: |
   sd-postgresql.createdb --help
   # sd-postgresql.createuser --help # Missing --help
   sd-postgresql.ctl --help
-  sd-postgresql.ctlcluster 18 main status # Missing --help
+  sd-postgresql.ctlcluster 19 main status # Missing --help
   # sd-postgresql.dropcluster --help # Missing --help
   sd-postgresql.dump --help
   sd-postgresql.dumpall --help

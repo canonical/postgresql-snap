@@ -14,5 +14,5 @@ execute: |
   sd-postgresql.psql -U postgres -h /tmp -p 5432 -d postgres -c "\l"
   sd-postgresql.psql -U postgres -h /tmp -d mydatabase -c "SELECT NOW();"
 
-  sd-postgresql.ctl status -D /var/lib/postgresql/18/main/
+  sd-postgresql.ctl status -D /var/lib/postgresql/19/main/
 

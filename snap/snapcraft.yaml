@@ -1,7 +1,7 @@
 name: sd-postgresql
 base: core26
 build-base: devel # TODO: remove before stable release
-version: '18.1'
+version: '19devel'
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
@@ -63,8 +63,8 @@ layout:
     bind: $SNAP/usr/share/perl
   /usr/local/lib/site_perl:
     bind: $SNAP/usr/local/lib/site_perl
-  /usr/lib/postgresql/18:
-    bind: $SNAP/usr/lib/postgresql/18
+  /usr/lib/postgresql/19:
+    bind: $SNAP/usr/lib/postgresql/19
   /var/cache/postgresql:
     bind: $SNAP_COMMON/var/cache/postgresql
   /etc/postgresql:
@@ -140,7 +140,7 @@ apps:
       - network
   postgresql:
     command: >-
-      ctl-cluster.sh --skip-systemctl-redirect --foreground 18 main start
+      ctl-cluster.sh --skip-systemctl-redirect --foreground 19 main start
     daemon: simple
     plugs:
       - network
@@ -150,7 +150,7 @@ parts:
   postgresql:
     plugin: dump
     source: bld:postgresql
-    source-channel: 18-26.04/edge
+    source-channel: 19-26.04/edge
     stage-packages:
       - libicu78
       - libldap2
