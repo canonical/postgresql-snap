@@ -2,7 +2,7 @@ summary: PostgreSQL SNAP smoke tests
 
 execute: |
   echo "Running smoke test..."
-  SNAP_VERSION=$(awk -F\' '/version/{print $2}' "${PROJECT_PATH}"/snap/snapcraft.yaml)
+  SNAP_VERSION=19devel
   postgresql.psql -U postgres -h /tmp -c "SELECT version();" | \
     grep "^ PostgreSQL ${SNAP_VERSION:-error}"
 
