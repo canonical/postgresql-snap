@@ -14,7 +14,7 @@ jobs:
     name: Build snap
     uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@lxd-version
     with:
-      lxd-snap-channel: 6/stable
+      lxd-snap-channel: 5.21/candidate
 
   test:
     name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
