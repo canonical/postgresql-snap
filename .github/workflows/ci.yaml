@@ -52,7 +52,7 @@ jobs:
       - name: Run tests
         run: |
           # lxd is necessary for spread
-          sudo snap install lxd
+          sudo snap install lxd --channel 5.21/candidate
           sudo adduser "$USER" lxd
           # `newgrp` does not work in GitHub Actions; use `sudo --user` instead
           sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd waitready
