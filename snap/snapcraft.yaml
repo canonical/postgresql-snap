@@ -1,5 +1,6 @@
 name: postgresql
-base: core24
+base: core26
+build-base: devel # TODO: remove before stable release
 version: '18.1'
 summary: PostgreSQL in a snap.
 description: |
@@ -9,7 +10,7 @@ description: |
 platforms:
   amd64:
   arm64:
-grade: stable
+grade: devel # TODO: switch to stable before stable release
 confinement: strict
 
 system-usernames:
@@ -38,8 +39,6 @@ hooks:
 layout:
   /usr/bin/perl:
     symlink: $SNAP/usr/bin/perl
-  /usr/bin/install:
-    bind-file: $SNAP/usr/bin/install
   /usr/bin/pg_lsclusters:
     symlink: $SNAP/usr/bin/pg_lsclusters
   /usr/bin/pg_ctlcluster:
@@ -151,17 +150,16 @@ parts:
   postgresql:
     plugin: dump
     source: bld:postgresql
-    source-channel: 18-24.04/edge
+    source-channel: 18-26.04/edge
     stage-packages:
-      - libicu74  # TODO: use libicu76 when base is 26.04
+      - libicu78
       - libldap2
-      - libxml2  # TODO: use libxml2-16 when base is 26.04
+      - libxml2-16
       - libnuma1
       - liburing2
       - perl
       - util-linux
       - locales-all
-      - coreutils
     override-stage: |
       craftctl default
       # Use tmp for socket
