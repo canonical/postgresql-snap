@@ -18,7 +18,7 @@ suites:
     prepare-each: |
       snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
     restore-each: |
-      snap remove sd-postgresql --purge --terminate
+      snap remove postgresql --purge --terminate
 
 exclude:
   - .git
