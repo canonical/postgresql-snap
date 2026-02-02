@@ -3,6 +3,6 @@ summary: PostgreSQL config CLI tests
 execute: |
   echo "Testing config tools..."
 
-  sd-postgresql.config
-  sd-postgresql.conftool 18 main show max_connections
-  sd-postgresql.conftool 18 main show all
+  postgresql.config
+  postgresql.conftool 18 main show max_connections
+  postgresql.conftool 18 main show all

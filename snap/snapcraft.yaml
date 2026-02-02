@@ -1,4 +1,4 @@
-name: sd-postgresql
+name: postgresql
 base: core26
 build-base: devel # TODO: remove before stable release
 version: '18.1'

@@ -3,28 +3,28 @@ summary: PostgreSQL cluster CLIs tests
 execute: |
   echo "Testing *cluster ..."
 
-  sd-postgresql.lsclusters
-  sd-postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+  postgresql.lsclusters
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
 
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main status
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main stop
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main status && exit 1 || true # failure expected
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main start
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 main status
-  sd-postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+  postgresql.ctlcluster --skip-systemctl-redirect 18 main status
+  postgresql.ctlcluster --skip-systemctl-redirect 18 main stop
+  postgresql.ctlcluster --skip-systemctl-redirect 18 main status && exit 1 || true # failure expected
+  postgresql.ctlcluster --skip-systemctl-redirect 18 main start
+  postgresql.ctlcluster --skip-systemctl-redirect 18 main status
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
 
-  sd-postgresql.createcluster 18 test1
-  sd-postgresql.lsclusters 18 test1
-  sd-postgresql.ctlcluster --skip-systemctl-redirect 18 test1 start
-  sd-postgresql.lsclusters 18 test1
-  sd-postgresql.psql -U postgres -h /tmp -p 5433 -d postgres -c "SELECT NOW();"
+  postgresql.createcluster 18 test1
+  postgresql.lsclusters 18 test1
+  postgresql.ctlcluster --skip-systemctl-redirect 18 test1 start
+  postgresql.lsclusters 18 test1
+  postgresql.psql -U postgres -h /tmp -p 5433 -d postgres -c "SELECT NOW();"
 
-  sd-postgresql.lsclusters 18
-  sd-postgresql.renamecluster 18 test1 test123
-  sd-postgresql.lsclusters 18
+  postgresql.lsclusters 18
+  postgresql.renamecluster 18 test1 test123
+  postgresql.lsclusters 18
 
 
-  sd-postgresql.lsclusters 18 test123
-  sd-postgresql.dropcluster --stop 18 test123
-  sd-postgresql.lsclusters 18 test123 && exit 1 || true # failure expected
+  postgresql.lsclusters 18 test123
+  postgresql.dropcluster --stop 18 test123
+  postgresql.lsclusters 18 test123 && exit 1 || true # failure expected
   

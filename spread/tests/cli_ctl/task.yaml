@@ -3,16 +3,16 @@ summary: PostgreSQL ctl CLI tests
 execute: |
   echo "Testing createuser, createdb, ctl..."
 
-  sd-postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
 
-  sd-postgresql.createuser -U postgres -h /tmp mynewuser
-  sd-postgresql.psql -U postgres -h /tmp -p 5432 -d postgres -c "\du"
-  sd-postgresql.psql -U postgres -h /tmp -p 5432 -d postgres \
+  postgresql.createuser -U postgres -h /tmp mynewuser
+  postgresql.psql -U postgres -h /tmp -p 5432 -d postgres -c "\du"
+  postgresql.psql -U postgres -h /tmp -p 5432 -d postgres \
     -c "select * from pg_user where usename='mynewuser'"
 
-  sd-postgresql.createdb -U postgres -h /tmp -p 5432 mydatabase
-  sd-postgresql.psql -U postgres -h /tmp -p 5432 -d postgres -c "\l"
-  sd-postgresql.psql -U postgres -h /tmp -d mydatabase -c "SELECT NOW();"
+  postgresql.createdb -U postgres -h /tmp -p 5432 mydatabase
+  postgresql.psql -U postgres -h /tmp -p 5432 -d postgres -c "\l"
+  postgresql.psql -U postgres -h /tmp -d mydatabase -c "SELECT NOW();"
 
-  sd-postgresql.ctl status -D /var/lib/postgresql/18/main/
+  postgresql.ctl status -D /var/lib/postgresql/18/main/
 
