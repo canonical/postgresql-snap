@@ -9,15 +9,16 @@ concurrency:
 on:
   push:
     branches:
-      - "*/edge"
-    paths:
-      - snap/**
+      - 18-26.04
+      - 19-26.04
   workflow_dispatch:
 
 jobs:
   build:
     name: Build snap
     uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v41.0.0
+    with:
+      snapcraft-snap-channel: latest/beta/sd
 
   release:
     name: Release snap
@@ -25,7 +26,7 @@ jobs:
       - build
     uses: canonical/data-platform-workflows/.github/workflows/release_snap.yaml@v41.0.0
     with:
-      channel: ${{ github.ref_name }}
+      channel: ${{ github.ref_name }}/edge/sd
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
     secrets:
       snap-store-token: ${{ secrets.SNAP_STORE_TOKEN }}
