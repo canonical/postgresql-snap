@@ -3,8 +3,8 @@ summary: PostgreSQL isready CLI tests
 execute: |
   echo "Testing isready..."
 
-  sd-postgresql.isready
+  postgresql.isready
 
-  sd-postgresql.isready -h /tmp -p 5432
+  postgresql.isready -h /tmp -p 5432
 
-  sd-postgresql.isready -h /tmp -p 5555 && exit 1 || true # failure expected
+  postgresql.isready -h /tmp -p 5555 && exit 1 || true # failure expected

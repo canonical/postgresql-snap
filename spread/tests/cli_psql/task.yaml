@@ -3,9 +3,9 @@ summary: PostgreSQL psql CLI tests
 execute: |
   echo "Testing psql..."
 
-  sd-postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
 
-  sd-postgresql.psql -U postgres -h /tmp -c "
+  postgresql.psql -U postgres -h /tmp -c "
     CREATE TABLE test (id SERIAL PRIMARY KEY, name TEXT);
     INSERT INTO test (name) VALUES ('test1'), ('test2');
     DELETE FROM test WHERE name='test1';

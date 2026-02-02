@@ -3,7 +3,7 @@ summary: PostgreSQL CLI tools tests
 execute: |
   echo "Testing SNAP aliases (no auto-connect in --jailmode)..."
 
-  snap alias sd-postgresql.psql psql
+  snap alias postgresql.psql psql
   psql --help
   psql -U postgres -h /tmp -c "SELECT NOW();"
 

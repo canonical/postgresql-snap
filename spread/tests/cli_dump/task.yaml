@@ -3,22 +3,22 @@ summary: PostgreSQL dump CLI tests
 execute: |
   echo "Testing dump/restore tools..."
 
-  sd-postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+  postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
 
-  sd-postgresql.psql -U postgres -h /tmp -c "
+  postgresql.psql -U postgres -h /tmp -c "
     CREATE TABLE test (id SERIAL PRIMARY KEY, name TEXT);
     INSERT INTO test (name) VALUES ('test1');
     DELETE FROM test WHERE name='test1';
     SELECT * from test;
   "
 
-  sd-postgresql.dump -c -C -U postgres -h /tmp -d postgres > mydb.sql
-  sd-postgresql.psql -U postgres -h /tmp -c "DROP TABLE test;"
-  sd-postgresql.psql -U postgres -h /tmp < mydb.sql
-  sd-postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"
+  postgresql.dump -c -C -U postgres -h /tmp -d postgres > mydb.sql
+  postgresql.psql -U postgres -h /tmp -c "DROP TABLE test;"
+  postgresql.psql -U postgres -h /tmp < mydb.sql
+  postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"
 
-  sd-postgresql.dumpall -c -U postgres -h /tmp > all.sql
-  sd-postgresql.psql -U postgres -h /tmp -c "DROP TABLE test;"
-  sd-postgresql.psql -U postgres -h /tmp < all.sql
-  sd-postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"
+  postgresql.dumpall -c -U postgres -h /tmp > all.sql
+  postgresql.psql -U postgres -h /tmp -c "DROP TABLE test;"
+  postgresql.psql -U postgres -h /tmp < all.sql
+  postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"
 
