@@ -51,6 +51,8 @@ jobs:
         run: |
           # lxd is necessary for spread
           sudo snap install lxd
+          # On ubuntu-22.04 runner, lxd 5.0 is installed. lxd 5.21 is needed for core26 for https://github.com/canonical/lxd/pull/17409
+          sudo snap refresh lxd --channel 5.21/stable
           sudo adduser "$USER" lxd
           # `newgrp` does not work in GitHub Actions; use `sudo --user` instead
           sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd waitready
@@ -59,5 +61,7 @@ jobs:
           sudo iptables -F FORWARD
           sudo iptables -P FORWARD ACCEPT
 
-          sudo snap install snapcraft --classic
+          sudo snap install snapd --beta  # TODO: remove once snapd 2.74 is out
+          sudo snap refresh snapd --beta  # TODO: remove once snapd 2.74 is out
+          sudo snap install snapcraft --classic --channel latest/beta/sd
           sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- snapcraft test
