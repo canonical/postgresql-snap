@@ -16,9 +16,7 @@ on:
 jobs:
   build:
     name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v41.0.0
-    with:
-      snapcraft-snap-channel: latest/beta/sd
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@sd-env-production
 
   release:
     name: Release snap
