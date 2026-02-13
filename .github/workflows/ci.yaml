@@ -19,6 +19,7 @@ jobs:
     uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@multi-arch-snap-revisions
     with:
       snapcraft-snap-revisions: '{"amd64": "16585", "arm64": "16587"}'
+      snapcraft-snap-channel: latest/stable
 
   test:
     name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
