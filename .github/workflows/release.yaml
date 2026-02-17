@@ -17,13 +17,13 @@ on:
 jobs:
   build:
     name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v41.1.2
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v42.0.0
 
   release:
     name: Release snap
     needs:
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_snap.yaml@v41.1.2
+    uses: canonical/data-platform-workflows/.github/workflows/release_snap.yaml@v42.0.0
     with:
       channel: ${{ github.ref_name }}
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
