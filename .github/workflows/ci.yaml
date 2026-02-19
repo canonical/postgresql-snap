@@ -18,7 +18,7 @@ jobs:
     name: Build snap
     uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@sd-env-production
     with:
-      snapcraft-snap-channel: latest/beta/sd
+      snapcraft-snap-channel: latest/beta
 
   test:
     name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
