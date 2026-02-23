@@ -9,6 +9,7 @@ concurrency:
 on:
   pull_request:
 
+permissions: {}
 jobs:
   lint:
     name: Lint
