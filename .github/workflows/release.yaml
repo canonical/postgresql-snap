@@ -19,6 +19,7 @@ jobs:
     uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@sd-env-production
     with:
       snapcraft-snap-channel: latest/beta
+    permissions: {}
 
   release:
     name: Release snap
