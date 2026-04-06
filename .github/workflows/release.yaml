@@ -17,18 +17,21 @@ on:
 jobs:
   build:
     name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v42.1.0
-    permissions: {}
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v48.0.4
+    permissions:
+      actions: read  # Needed for GitHub API call to get workflow version
+      contents: read
 
   release:
     name: Release snap
     needs:
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_snap.yaml@v42.1.0
+    uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge.yaml@v48.0.4
     with:
-      channel: ${{ github.ref_name }}
+      track: '16'
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
     secrets:
-      snap-store-token: ${{ secrets.SNAP_STORE_TOKEN }}
+      snap-store-token: ${{ secrets.SNAP_STORE_TOKEN_EDGE }}
     permissions:
-      contents: write  # Needed to create GitHub release
+      actions: read  # Needed for GitHub API call to get workflow version
+      contents: write  # Needed to create git tags
