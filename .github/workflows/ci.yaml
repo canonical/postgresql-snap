@@ -9,15 +9,36 @@ concurrency:
 on:
   pull_request:
 
-permissions: {}
 jobs:
+  lint-workflows:
+    name: Lint .github/workflows/
+    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v48.0.4
+    permissions:
+      contents: read
+
   lint:
     name: Lint
-    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v42.1.0
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install tox & poetry
+        run: |
+          pipx install tox
+          pipx install poetry
+      - name: tox run -e lint
+        run: tox run -e lint
+    permissions: {}
 
   build:
     name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v42.1.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v48.0.4
+    permissions:
+      actions: read  # Needed for GitHub API call to get workflow version
+      contents: read
 
   test:
     name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
@@ -34,11 +55,14 @@ jobs:
           - { os: linux, arch: amd64, host_arch: x64, gh_suffix: "" }
           - { os: linux, arch: arm64, host_arch: arm64, gh_suffix: "-arm" }
     needs:
+      - lint-workflows
       - lint
       - build
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Download snap package(s)
         uses: actions/download-artifact@v8
         with:
@@ -62,3 +86,4 @@ jobs:
 
           sudo snap install snapcraft --classic
           sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- snapcraft test
+    permissions: {}
