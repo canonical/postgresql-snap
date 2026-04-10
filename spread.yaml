@@ -12,9 +12,9 @@ suites:
     summary: General integration tests
     prepare: |
       apt --purge remove postgresql*
-      snap install snapd --beta  # TODO: remove once snapd 2.74 is out
-      snap refresh snapd --beta  # TODO: remove once snapd 2.74 is out
-      snap install core26 --edge # TODO: remove once core26 latest/stable is out
+      snap install snapd  # Ensure snapd 2.74 is installed
+      snap refresh snapd  # Ensure snapd 2.74 is installed
+      snap install core26 --beta # TODO: remove once core26 latest/stable is out
     prepare-each: |
       snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
     restore-each: |
