@@ -1,7 +1,6 @@
 import yaml
 import subprocess
 import time
-import pytest
 
 def test_all_apps():
     with open("snap/snapcraft.yaml") as file:
