@@ -39,12 +39,6 @@ hooks:
 layout:
   /usr/bin/perl:
     symlink: $SNAP/usr/bin/perl
-  /usr/bin/pg_lsclusters:
-    symlink: $SNAP/usr/bin/pg_lsclusters
-  /usr/bin/pg_ctlcluster:
-    symlink: $SNAP/usr/bin/pg_ctlcluster
-  /usr/bin/pg_dropcluster:
-    symlink: $SNAP/usr/bin/pg_dropcluster
   /usr/lib/python3/dist-packages:
     bind: $SNAP/usr/lib/python3/dist-packages
   /etc/perl:
@@ -69,8 +63,6 @@ layout:
     bind: $SNAP_COMMON/var/cache/postgresql
   /etc/postgresql:
     bind: $SNAP_COMMON/etc/postgresql
-  /etc/postgresql-common:
-    bind: $SNAP_COMMON/etc/postgresql-common
   /var/lib/postgresql:
     bind: $SNAP_COMMON/var/lib/postgresql
   /var/log/postgresql:
@@ -80,67 +72,46 @@ layout:
 
 apps:
   createdb:
-    command: usr/bin/createdb
+    command: usr/lib/postgresql/18/bin/createdb
   createuser:
-    command: usr/bin/createuser
+    command: usr/lib/postgresql/18/bin/createuser
   archivecleanup:
     command: archivecleanup.sh
-  createcluster:
-    command: create-cluster.sh
-    plugs:
-      - network
-  dropcluster:
-    command: drop-cluster.sh
   isready:
-    command: usr/bin/pg_isready
+    command: usr/lib/postgresql/18/bin/pg_isready
   restore:
-    command: usr/bin/pg_restore
+    command: usr/lib/postgresql/18/bin/pg_restore
     plugs:
       - network
   config:
-    command: usr/bin/pg_config
+    command: usr/lib/postgresql/18/bin/pg_config
   dump:
-    command: usr/bin/pg_dump
+    command: usr/lib/postgresql/18/bin/pg_dump
     plugs:
       - network
-  lsclusters:
-    command: usr/bin/pg_lsclusters
   recvlogical:
-    command: usr/bin/pg_recvlogical
+    command: usr/lib/postgresql/18/bin/pg_recvlogical
   basebackup:
-    command: usr/bin/pg_basebackup
-  conftool:
-    command: conftool.sh
+    command: usr/lib/postgresql/18/bin/pg_basebackup
   ctl:
     command: ctl.sh
     plugs:
       - network
       - network-bind
-  ctlcluster:
-    command: ctl-cluster.sh
-    plugs:
-      - network
-      - network-bind
   dumpall:
-    command: usr/bin/pg_dumpall
+    command: usr/lib/postgresql/18/bin/pg_dumpall
     plugs:
       - network
   receivewal:
-    command: usr/bin/pg_receivewal
-  renamecluster:
-    command: rename-cluster.sh
-    plugs:
-      - network
-      - network-bind
+    command: usr/lib/postgresql/18/bin/pg_receivewal
   pgbench:
-    command: usr/bin/pgbench
+    command: usr/lib/postgresql/18/bin/pgbench
   psql:
-    command: usr/bin/psql
+    command: usr/lib/postgresql/18/bin/psql
     plugs:
       - network
   postgresql:
-    command: >-
-      ctl-cluster.sh --skip-systemctl-redirect --foreground 18 main start
+    command: postgres.sh
     daemon: simple
     plugs:
       - network
@@ -160,26 +131,8 @@ parts:
       - perl
       - util-linux
       - locales-all
-    override-stage: |
-      craftctl default
-      # Use tmp for socket
-      ls -1 $SNAPCRAFT_STAGE/usr/bin/pg_* | xargs sed -i \
-        's/\/var\/run\/postgresql/\/tmp/g'
-      sed -i 's/\/var\/run\/postgresql/\/tmp/g' \
-        $SNAPCRAFT_STAGE/usr/share/perl5/PgCommon.pm
-      # Pass user in startup checks
-      sed -i "s/psql -h /psql -U postgres -h /g" \
-        $SNAPCRAFT_STAGE/usr/bin/pg_ctlcluster
-      # Skip systemd when renaming and dropping
-      sed -i \
-        "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
-        $SNAPCRAFT_STAGE/usr/bin/pg_dropcluster
-      sed -i \
-        "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
-        $SNAPCRAFT_STAGE/usr/bin/pg_renamecluster
     organize:
       etc/postgresql: default-config/etc/postgresql
-      etc/postgresql-common: default-config/etc/postgresql-common
       var/lib/postgresql: default-config/var/lib/postgresql
       var/log/postgresql: default-config/var/log/postgresql
       usr/share/doc/postgresql/copyright: licenses/COPYRIGHT-postgresql
