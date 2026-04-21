@@ -16,7 +16,6 @@ execute: |
 
   echo "Move current data/logs..."
   cp -a /var/snap/postgresql/common/var/lib/postgresql/* /srv/mypgdata/data
-  cp -a /var/snap/postgresql/common/var/log/postgresql/* /srv/mypgdata/logs
 
   echo "Mount data/logs storage inside SNAP..."
   mount --bind /srv/mypgdata/data /var/snap/postgresql/common/var/lib/postgresql
