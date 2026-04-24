@@ -10,6 +10,7 @@ description: |
 platforms:
   amd64:
   arm64:
+  riscv64:
 grade: devel # TODO: switch to stable before stable release
 confinement: strict
 
