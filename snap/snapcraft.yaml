@@ -172,6 +172,12 @@ parts:
       sed -i \
         "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
         $SNAPCRAFT_STAGE/usr/bin/pg_renamecluster
+    prime:
+      # Mute lint by removing unnecessary APT Recommends
+      - -usr/lib/*/libexslt.so*
+      - -usr/lib/*/libicuio.so*
+      - -usr/lib/*/libicutest.so*
+      - -usr/lib/*/libicutu.so*
     organize:
       etc/postgresql: default-config/etc/postgresql
       etc/postgresql-common: default-config/etc/postgresql-common
