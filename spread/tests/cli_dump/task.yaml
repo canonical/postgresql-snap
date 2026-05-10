@@ -13,11 +13,13 @@ execute: |
   "
 
   postgresql.dump -c -C -U postgres -h /tmp -d postgres > mydb.sql
+  PGPASSWORD=pgpass postgresql.dump -c -C -U postgres -h 127.0.0.1 -d postgres > /dev/null
   postgresql.psql -U postgres -h /tmp -c "DROP TABLE test;"
   postgresql.psql -U postgres -h /tmp < mydb.sql
   postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"
 
   postgresql.dumpall -c -U postgres -h /tmp > all.sql
+  PGPASSWORD=pgpass postgresql.dumpall -c -U postgres -h 127.0.0.1 > /dev/null
   postgresql.psql -U postgres -h /tmp -c "DROP TABLE test;"
   postgresql.psql -U postgres -h /tmp < all.sql
   postgresql.psql -U postgres -h /tmp -c "SELECT * from test;"

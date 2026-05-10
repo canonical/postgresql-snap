@@ -6,4 +6,5 @@ execute: |
   snap alias postgresql.psql psql
   psql --help
   psql -U postgres -h /tmp -c "SELECT NOW();"
+  PGPASSWORD=pgpass psql -U postgres -h 127.0.0.1 -c "SELECT NOW();"
 
