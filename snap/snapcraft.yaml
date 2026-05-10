@@ -2,14 +2,18 @@ name: postgresql
 base: core26
 build-base: devel # TODO: remove before stable release
 version: '18.3'
+title: PostgreSQL
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
   system emphasizing extensibility and SQL compliance.
+license: Apache-2.0
+contact: https://github.com/canonical/postgresql-snap/issues
 
 platforms:
   amd64:
   arm64:
+
 grade: devel # TODO: switch to stable before release
 confinement: strict
 
@@ -146,6 +150,12 @@ apps:
       - network
       - network-bind
 
+lint:
+  ignore:
+    - classic  # TODO: remove when core26 is stable
+    - library:
+        - usr/lib/**/libnss_*.so*
+
 parts:
   postgres-debs:
     plugin: nil
@@ -170,6 +180,31 @@ parts:
       sed -i \
         "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
         $SNAPCRAFT_STAGE/usr/bin/pg_renamecluster
+    override-prime: |
+      craftctl default
+      # Remove unneeded binaries, keep only setpriv, perl, openssl, passwd, pg_*
+      rm -rf $SNAPCRAFT_PRIME/usr/sbin
+      cd $SNAPCRAFT_PRIME/usr/bin && find . -maxdepth 1 -type f \
+        ! -name 'setpriv' ! -name 'perl*' ! -name 'openssl' ! -name 'passwd' \
+        ! -name 'pg_*' ! -name 'createdb' ! -name 'createuser' \
+        ! -name 'psql' ! -name 'pgbench' \
+        -delete
+      # Remove unneeded library directories
+      rm -rf $SNAPCRAFT_PRIME/usr/lib/*/gconv \
+        $SNAPCRAFT_PRIME/usr/lib/*/engines-3 \
+        $SNAPCRAFT_PRIME/usr/lib/*/security
+      # Remove unused libraries
+      cd $SNAPCRAFT_PRIME/usr/lib/*-linux-gnu && rm -f \
+        libexslt* libicuio* libicutest* libicutu* \
+        libBrokenLocale* libanl* libc_malloc_debug* libdl.so* \
+        libdrop_ambient* libformw* libgcrypt* libhistory* \
+        libmemusage* libmenuw* libmvec* libnsl.so* \
+        libnss_compat* libnss_hesiod* libpamc* libpanelw* \
+        libpcprofile* libpthread.so* librt.so* libthread_db* \
+        libtic* liburing-ffi* libutil.so* \
+        libacl* libdebconfclient* libgpg-error* libmount* \
+        libncursesw* libproc2* libsemanage* libsmartcols* \
+        libudev* libblkid* libsepol*
     organize:
       etc/postgresql: default-config/etc/postgresql
       etc/postgresql-common: default-config/etc/postgresql-common
