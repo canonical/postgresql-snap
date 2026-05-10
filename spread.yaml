@@ -12,11 +12,10 @@ suites:
     summary: General integration tests
     prepare: |
       apt --purge remove postgresql*
-      snap install snapd --edge  # TODO: remove once snapd 2.74 is out
-      snap refresh snapd --edge  # TODO: remove once snapd 2.74 is out
-      snap install core26 --edge # TODO: remove once core26 latest/stable is out
     prepare-each: |
       snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
+      postgresql.psql -U postgres \
+        -c "ALTER USER postgres WITH PASSWORD 'pgpass'"
     restore-each: |
       snap remove postgresql --purge --terminate
 

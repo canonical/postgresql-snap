@@ -6,5 +6,7 @@ execute: |
   postgresql.isready
 
   postgresql.isready -h /tmp -p 5432
+  postgresql.isready -h 127.0.0.1 -p 5432
 
   postgresql.isready -h /tmp -p 5555 && exit 1 || true # failure expected
+  postgresql.isready -h 127.0.0.1 -p 5555 && exit 1 || true # failure expected
