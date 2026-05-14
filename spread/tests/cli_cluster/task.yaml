@@ -5,6 +5,7 @@ execute: |
 
   postgresql.lsclusters
   postgresql.psql -U postgres -h /tmp -c "SELECT NOW();"
+  PGPASSWORD=pgpass postgresql.psql -U postgres -h 127.0.0.1 -c "SELECT NOW();"
 
   postgresql.ctlcluster --skip-systemctl-redirect 18 main status
   postgresql.ctlcluster --skip-systemctl-redirect 18 main stop
