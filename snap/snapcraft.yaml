@@ -94,6 +94,8 @@ apps:
     command: drop-cluster.sh
   isready:
     command: usr/bin/pg_isready
+    plugs:
+      - network
   restore:
     command: usr/bin/pg_restore
     plugs:
@@ -108,8 +110,12 @@ apps:
     command: usr/bin/pg_lsclusters
   recvlogical:
     command: usr/bin/pg_recvlogical
+    plugs:
+      - network
   basebackup:
     command: usr/bin/pg_basebackup
+    plugs:
+      - network
   conftool:
     command: conftool.sh
   ctl:
@@ -128,6 +134,8 @@ apps:
       - network
   receivewal:
     command: usr/bin/pg_receivewal
+    plugs:
+      - network
   renamecluster:
     command: rename-cluster.sh
     plugs:
@@ -135,6 +143,8 @@ apps:
       - network-bind
   pgbench:
     command: usr/bin/pgbench
+    plugs:
+      - network
   psql:
     command: usr/bin/psql
     plugs:

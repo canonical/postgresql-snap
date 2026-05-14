@@ -14,6 +14,8 @@ suites:
       apt --purge remove postgresql*
     prepare-each: |
       snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
+      postgresql.psql -U postgres \
+        -c "ALTER USER postgres WITH PASSWORD 'pgpass'"
     restore-each: |
       snap remove postgresql --purge --terminate
 

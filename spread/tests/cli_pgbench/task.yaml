@@ -6,4 +6,6 @@ execute: |
   postgresql.createdb -U postgres -h /tmp -p 5432 mybench
 
   postgresql.pgbench -U postgres -h /tmp -p 5432 -d mybench --initialize
-  postgresql.pgbench -U postgres -h /tmp -p 5432 -d mybench -T 10
+  postgresql.pgbench -U postgres -h /tmp -p 5432 -d mybench -T 5
+
+  PGPASSWORD=pgpass postgresql.pgbench -U postgres -h 127.0.0.1 -p 5432 -d mybench -T 5
