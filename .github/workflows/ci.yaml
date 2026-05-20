@@ -51,6 +51,7 @@ jobs:
         base:
           - { codename: jammy, version: 22.04 }
           - { codename: noble, version: 24.04 }
+          - { codename: resolute, version: 26.04 }
         platform:
           - { os: linux, arch: amd64, host_arch: x64, gh_suffix: "" }
           - { os: linux, arch: arm64, host_arch: arm64, gh_suffix: "-arm" }

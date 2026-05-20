@@ -3,18 +3,25 @@ summary: PostgreSQL restore CLI tests
 execute: |
   echo "Testing restore..."
 
+  # Create test data
   postgresql.psql -U postgres -h /tmp -c "
     CREATE TABLE test_restore (id SERIAL PRIMARY KEY, name TEXT);
-    INSERT INTO test_restore (name) VALUES ('row1'), ('row2');
+    INSERT INTO test_restore (name) VALUES ('row1');
+  "
+  PGPASSWORD=pgpass postgresql.psql -U postgres -h 127.0.0.1 -c "
+    INSERT INTO test_restore (name) VALUES ('row2');
   "
 
+  # Dump via socket and network
   postgresql.dump -Fc -U postgres -h /tmp -d postgres -f /tmp/test_restore.dump
   PGPASSWORD=pgpass postgresql.dump -Fc -U postgres -h 127.0.0.1 -d postgres -f /tmp/test_restore_tcp.dump
 
+  # Restore via socket
   postgresql.psql -U postgres -h /tmp -c "DROP TABLE test_restore;"
-
   postgresql.restore -U postgres -h /tmp -d postgres /tmp/test_restore.dump
-  PGPASSWORD=pgpass postgresql.restore -U postgres -h 127.0.0.1 -d postgres /tmp/test_restore.dump 2>/dev/null || true
-
   postgresql.psql -U postgres -h /tmp -c "SELECT * FROM test_restore;" | grep row1
+
+  # restore via network
+  PGPASSWORD=pgpass postgresql.psql -U postgres -h 127.0.0.1 -c "DROP TABLE test_restore;"
+  PGPASSWORD=pgpass postgresql.restore -U postgres -h 127.0.0.1 -d postgres /tmp/test_restore_tcp.dump || true
   PGPASSWORD=pgpass postgresql.psql -U postgres -h 127.0.0.1 -c "SELECT * FROM test_restore;" | grep row2
