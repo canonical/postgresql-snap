@@ -1,0 +1,12 @@
+summary: PostgreSQL basebackup CLI tests
+
+execute: |
+  echo "Testing basebackup..."
+
+  BACKUP_DIR=/var/snap/postgresql/common/pg_basebackup_test
+  postgresql.basebackup -D $BACKUP_DIR -U postgres -h /tmp
+
+  test -f $BACKUP_DIR/PG_VERSION
+  test -d $BACKUP_DIR/base
+
+  rm -rf $BACKUP_DIR
