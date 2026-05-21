@@ -1,0 +1,24 @@
+summary: PostgreSQL recvlogical CLI tests
+
+execute: |
+  echo "Testing recvlogical..."
+
+  postgresql.conftool 18 main set wal_level logical
+  postgresql.ctlcluster --skip-systemctl-redirect 18 main restart
+  timeout 10 /bin/bash -c "while ! postgresql.isready ; do sleep 1; done"
+
+  postgresql.psql -U postgres -h /tmp -c "
+    SELECT pg_create_logical_replication_slot('test_slot', 'test_decoding');
+  "
+
+  OUT_FILE=/var/snap/postgresql/common/pg_recvlogical_test.out
+  timeout 5 postgresql.recvlogical -U postgres -h /tmp -d postgres \
+    --slot=test_slot --start -f $OUT_FILE || true
+
+  test -f $OUT_FILE
+
+  postgresql.psql -U postgres -h /tmp -c "
+    SELECT pg_drop_replication_slot('test_slot');
+  "
+
+  rm -f $OUT_FILE

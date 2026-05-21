@@ -1,0 +1,19 @@
+summary: PostgreSQL archivecleanup CLI tests
+
+execute: |
+  echo "Testing archivecleanup..."
+
+  WAL_DIR=/var/snap/postgresql/common/pg_wal_test
+  mkdir -p $WAL_DIR
+  touch $WAL_DIR/000000010000000000000001
+  touch $WAL_DIR/000000010000000000000002
+  touch $WAL_DIR/000000010000000000000003
+  chown -R 584792:root $WAL_DIR
+
+  postgresql.archivecleanup $WAL_DIR 000000010000000000000002
+
+  test ! -f $WAL_DIR/000000010000000000000001
+  test -f $WAL_DIR/000000010000000000000002
+  test -f $WAL_DIR/000000010000000000000003
+
+  rm -rf $WAL_DIR
