@@ -1,0 +1,20 @@
+summary: PostgreSQL receivewal CLI tests
+
+execute: |
+  echo "Testing receivewal..."
+
+  WAL_DIR=/var/snap/postgresql/common/pg_receivewal_test
+  mkdir -p $WAL_DIR
+  chmod a+w $WAL_DIR
+
+  timeout 40 postgresql.receivewal -U postgres -h /tmp -D $WAL_DIR &
+  RECV_PID=$!
+
+  timeout 30 /bin/bash -c "while [ \$(ls $WAL_DIR/ 2>/dev/null | wc -l) -eq 0 ]; do sleep 1; done"
+
+  kill $RECV_PID 2>/dev/null || true
+  wait $RECV_PID 2>/dev/null || true
+
+  test "$(ls $WAL_DIR/ | wc -l)" -gt 0
+
+  rm -rf $WAL_DIR
