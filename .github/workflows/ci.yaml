@@ -86,9 +86,6 @@ jobs:
           # Workaround for Docker & LXD on same machine
           sudo iptables -F FORWARD
           sudo iptables -P FORWARD ACCEPT
-
-          sudo snap install snapd --beta  # TODO: remove once snapd 2.74 is out
-          sudo snap refresh snapd --beta  # TODO: remove once snapd 2.74 is out
-          sudo snap install snapcraft --classic --channel latest/beta/sd
+          sudo snap install snapcraft --classic
           sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- snapcraft test
     permissions: {}
