@@ -8,6 +8,12 @@ concurrency:
 
 on:
   pull_request:
+  # Triggered on push by .github/workflows/release.yaml
+  workflow_call:
+    outputs:
+      artifact-prefix:
+        description: build_snap.yaml `artifact-prefix` output
+        value: ${{ jobs.build.outputs.artifact-prefix }}
 
 jobs:
   lint-workflows:
