@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v49.0.4
+  ci-tests:
+    name: Tests
+    uses: ./.github/workflows/ci.yaml
     permissions:
       actions: read  # Needed for GitHub API call to get workflow version
       contents: read
@@ -25,11 +25,11 @@ jobs:
   release:
     name: Release snap
     needs:
-      - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge.yaml@v49.0.4
+      - ci-tests
+    uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge.yaml@v49.0.1
     with:
       track: '18'
-      artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
+      artifact-prefix: ${{ needs.ci-tests.outputs.artifact-prefix }}
     secrets:
       snap-store-token: ${{ secrets.SNAP_STORE_TOKEN_EDGE }}
     permissions:
