@@ -1,6 +1,5 @@
 name: postgresql
 base: core26
-build-base: devel # TODO: remove before stable release
 version: '18.4'
 summary: PostgreSQL in a snap.
 description: |
@@ -16,7 +15,7 @@ website: https://canonical.com/data/postgresql
 platforms:
   amd64:
   arm64:
-grade: devel # TODO: switch to stable before release
+grade: stable
 confinement: strict
 
 system-usernames:
@@ -186,6 +185,14 @@ parts:
       sed -i \
         "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
         $SNAPCRAFT_STAGE/usr/bin/pg_renamecluster
+    prime:
+      # Mute lint by removing unnecessary for PostgreSQL run-time libraries
+      # which are shipped as APT Depends packages: libxslt1.1, libicu74.
+      - -usr/lib/*/libexslt.so*
+      - -usr/lib/*/libicuio.so*
+      - -usr/lib/*/libicutest.so*
+      - -usr/lib/*/libicutu.so*
+      - -usr/lib/*/liburing-ffi.so*
     organize:
       etc/postgresql: default-config/etc/postgresql
       etc/postgresql-common: default-config/etc/postgresql-common
