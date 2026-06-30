@@ -19,19 +19,17 @@ jobs:
     name: Tests
     uses: ./.github/workflows/ci.yaml
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
       contents: read
 
   release:
     name: Release snap
     needs:
       - ci-tests
-    uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge.yaml@v49.0.4
+    uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge.yaml@v50.0.0
     with:
       track: '18'
       artifact-prefix: ${{ needs.ci-tests.outputs.artifact-prefix }}
     secrets:
       snap-store-token: ${{ secrets.SNAP_STORE_TOKEN_EDGE }}
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
       contents: write  # Needed to create git tags
