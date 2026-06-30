@@ -26,7 +26,7 @@ jobs:
     name: Release snap
     needs:
       - ci-tests
-    uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge.yaml@v49.0.4
+    uses: canonical/data-platform-workflows/.github/workflows/release_snap_edge.yaml@v50.0.0
     with:
       track: '18'
       artifact-prefix: ${{ needs.ci-tests.outputs.artifact-prefix }}
