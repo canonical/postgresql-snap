@@ -19,7 +19,6 @@ jobs:
     name: Tests
     uses: ./.github/workflows/ci.yaml
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
       contents: read
 
   release:
@@ -33,5 +32,4 @@ jobs:
     secrets:
       snap-store-token: ${{ secrets.SNAP_STORE_TOKEN_EDGE }}
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
       contents: write  # Needed to create git tags
