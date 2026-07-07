@@ -68,6 +68,8 @@ restore_each() {
 # "ubuntu", such as "ubuntu-daily", this function should be
 # modified to point there.
 allocate_lxdvm() {
+    echo FOO
+    exit 2
     name=$(echo "$SPREAD_SYSTEM" | tr '[:punct:]' -)
     system=$(echo "$SPREAD_SYSTEM" | tr / -)
     if [[ "$system" =~ ^ubuntu- ]]; then
@@ -105,6 +107,8 @@ discard_lxdvm() {
 }
 
 allocate_ci() {
+    echo BAR
+    exit 3
     if [ -z "$CI" ]; then
         echo "This backend is intended to be used only in CI systems."
         exit 1
