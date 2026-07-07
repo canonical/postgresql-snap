@@ -91,4 +91,7 @@ jobs:
 
           sudo snap install snapcraft --classic
           sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- snapcraft test
+      - run: |
+          ls foo
+          ls bar
     permissions: {}
