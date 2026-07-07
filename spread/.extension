@@ -108,7 +108,6 @@ discard_lxdvm() {
 
 allocate_ci() {
     touch bar
-    exit 3
     if [ -z "$CI" ]; then
         echo "This backend is intended to be used only in CI systems."
         exit 1
