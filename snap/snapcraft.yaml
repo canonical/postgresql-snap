@@ -178,6 +178,13 @@ parts:
       # Pass user in startup checks
       sed -i "s/psql -h /psql -U postgres -h /g" \
         $SNAPCRAFT_STAGE/usr/bin/pg_ctlcluster
+      # Don't have postgres children reset oom_score_adj: strict confinement
+      # denies the write, spamming the kernel log with AppArmor denials on
+      # every fork (issue #190). The adjustment is a no-op in the snap anyway,
+      # as the root-only -900 postmaster protection never runs (we setpriv to
+      # _daemon_ first). Overridable via the cluster 'environment' file.
+      sed -i 's|"/proc/self/oom_score_adj"|"/dev/null"|' \
+        $SNAPCRAFT_STAGE/usr/bin/pg_ctlcluster
       # Skip systemd when renaming and dropping
       sed -i \
         "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
