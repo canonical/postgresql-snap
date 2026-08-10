@@ -6,6 +6,9 @@ execute: |
   postgresql.psql -U postgres -h /tmp -c "SELECT version();" | \
     grep "^ PostgreSQL ${SNAP_VERSION:-error}"
 
+  echo "Ensure no AppArmor denials from the snap (issue #190)..."
+  ! journalctl -k | grep 'apparmor="DENIED"' | grep 'snap\.postgresql\.'
+
   echo "Ensure all tools have been shipped.."
   postgresql.archivecleanup --help
   postgresql.basebackup --help
