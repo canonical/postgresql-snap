@@ -7,7 +7,10 @@ execute: |
     grep "^ PostgreSQL ${SNAP_VERSION:-error}"
 
   echo "Ensure no AppArmor denials from the snap (issue #190)..."
-  ! journalctl -k | grep 'apparmor="DENIED"' | grep 'snap\.postgresql\.'
+  if journalctl -k | grep 'apparmor="DENIED"' | grep 'snap\.postgresql\.'; then
+    echo "ERROR: AppArmor denials produced by the snap (see above)" >&2
+    exit 1
+  fi
 
   echo "Ensure all tools have been shipped.."
   postgresql.archivecleanup --help

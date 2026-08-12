@@ -71,6 +71,13 @@ that the (inevitably denied) per-fork writes to `oom_score_adj` do not flood the
 log with AppArmor denials (see
 [issue #190](https://github.com/canonical/postgresql-snap/issues/190)). The value can
 be overridden per cluster in
-`/var/snap/postgresql/common/etc/postgresql/16/main/environment`, but pointing it back
-at `/proc/self/oom_score_adj` only restores the denials — the write stays forbidden by
-confinement.
+`/var/snap/postgresql/common/etc/postgresql/16/main/environment`. The file uses
+`postgresql.conf` syntax, so the value must be single-quoted — an unquoted path makes
+`pg_ctlcluster` fail with an `invalid line` error and the cluster does not start:
+
+```
+PG_OOM_ADJUST_FILE = '/proc/self/oom_score_adj'
+```
+
+Note that pointing it back at `/proc/self/oom_score_adj` only restores the denials —
+the write stays forbidden by confinement.
