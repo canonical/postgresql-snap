@@ -229,6 +229,11 @@ parts:
       # _daemon_ first). Overridable via the cluster 'environment' file.
       sed -i 's|"/proc/self/oom_score_adj"|"/dev/null"|' \
         $SNAPCRAFT_STAGE/usr/bin/pg_ctlcluster
+      # Drop the best-effort 'chattr +C' (btrfs no-CoW) on the new data dir:
+      # chattr is not shipped in the snap and executing the base's copy is
+      # denied by AppArmor on some hosts, logging exec denials on every
+      # cluster creation (issue #190).
+      sed -i '/chattr +C/d' $SNAPCRAFT_STAGE/usr/bin/pg_createcluster
       # Skip systemd when renaming and dropping
       sed -i \
         "s/'pg_ctlcluster',/'pg_ctlcluster', '--skip-systemctl-redirect',/g" \
