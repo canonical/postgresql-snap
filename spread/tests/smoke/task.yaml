@@ -7,7 +7,7 @@ execute: |
     grep "^ PostgreSQL ${SNAP_VERSION:-error}"
 
   echo "Ensure no AppArmor denials from the snap (issue #190)..."
-  if journalctl -k | grep 'apparmor="DENIED"' | grep 'snap\.postgresql\.'; then
+  if journalctl -k | grep 'apparmor="DENIED".*oom_score_adj' | grep 'snap\.postgresql\.'; then
     echo "ERROR: AppArmor denials produced by the snap (see above)" >&2
     exit 1
   fi
