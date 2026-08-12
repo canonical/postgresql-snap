@@ -91,15 +91,19 @@ apps:
   # _daemon_-owned cluster paths when run as root, spamming the kernel log
   # with AppArmor denials (issue #190). The wrapper's cluster/socket
   # discovery is replaced by the PGHOST default below; -h/--host flags and
-  # connection URIs still override it.
+  # connection URIs still override it. PGGSSENCMODE=disable stops libpq's
+  # GSSAPI probing on TCP connections (krb5 init reads /etc/gss/mech.d/,
+  # denied under confinement); a gssencmode= conninfo parameter overrides.
   createdb:
     command: usr/lib/postgresql/16/bin/createdb
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
   createuser:
     command: usr/lib/postgresql/16/bin/createuser
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
   archivecleanup:
     command: archivecleanup.sh
   createcluster:
@@ -112,12 +116,14 @@ apps:
     command: usr/lib/postgresql/16/bin/pg_isready
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   restore:
     command: usr/lib/postgresql/16/bin/pg_restore
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   config:
@@ -126,6 +132,7 @@ apps:
     command: usr/lib/postgresql/16/bin/pg_dump
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   lsclusters:
@@ -134,12 +141,14 @@ apps:
     command: usr/lib/postgresql/16/bin/pg_recvlogical
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   basebackup:
     command: usr/lib/postgresql/16/bin/pg_basebackup
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   conftool:
@@ -158,12 +167,14 @@ apps:
     command: usr/lib/postgresql/16/bin/pg_dumpall
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   receivewal:
     command: usr/lib/postgresql/16/bin/pg_receivewal
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   renamecluster:
@@ -175,12 +186,14 @@ apps:
     command: usr/lib/postgresql/16/bin/pgbench
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   psql:
     command: usr/lib/postgresql/16/bin/psql
     environment:
       PGHOST: /tmp
+      PGGSSENCMODE: disable
     plugs:
       - network
   postgresql:
