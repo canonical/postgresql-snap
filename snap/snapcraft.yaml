@@ -1,6 +1,6 @@
 name: postgresql
 base: core26
-version: '18.4'
+version: '18.6'
 summary: PostgreSQL in a snap.
 description: |
   PostgreSQL is a free and open-source relational database management
