@@ -90,12 +90,6 @@ apps:
     command: usr/bin/createuser
   archivecleanup:
     command: archivecleanup.sh
-  createcluster:
-    command: create-cluster.sh
-    plugs:
-      - network
-  dropcluster:
-    command: drop-cluster.sh
   isready:
     command: usr/bin/pg_isready
     plugs:
@@ -110,8 +104,6 @@ apps:
     command: usr/bin/pg_dump
     plugs:
       - network
-  lsclusters:
-    command: usr/bin/pg_lsclusters
   recvlogical:
     command: usr/bin/pg_recvlogical
     plugs:
@@ -127,11 +119,6 @@ apps:
     plugs:
       - network
       - network-bind
-  ctlcluster:
-    command: ctl-cluster.sh
-    plugs:
-      - network
-      - network-bind
   dumpall:
     command: usr/bin/pg_dumpall
     plugs:
@@ -140,11 +127,6 @@ apps:
     command: usr/bin/pg_receivewal
     plugs:
       - network
-  renamecluster:
-    command: rename-cluster.sh
-    plugs:
-      - network
-      - network-bind
   pgbench:
     command: usr/bin/pgbench
     plugs:

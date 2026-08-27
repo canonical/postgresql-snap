@@ -4,7 +4,7 @@ execute: |
   echo "Testing recvlogical..."
 
   postgresql.conftool 18 main set wal_level logical
-  postgresql.ctlcluster --skip-systemctl-redirect 18 main restart
+  snap restart postgresql
   timeout 10 /bin/bash -c "while ! postgresql.isready ; do sleep 1; done"
 
   postgresql.psql -U postgres -h /tmp -c "
