@@ -16,6 +16,7 @@ execute: |
   postgresql.archivecleanup --help
   postgresql.basebackup --help
   postgresql.config --help
+  postgresql.conftool --help
   postgresql.createdb --help
   # postgresql.createuser --help # Missing --help
   postgresql.ctl --help

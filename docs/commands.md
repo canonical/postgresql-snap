@@ -124,6 +124,7 @@ tps = 110.587085 (without initial connection time)
 ## PostgreSQL configuration
 
 * [postgresql.config](https://www.postgresql.org/docs/current/app-pgconfig.html) - retrieve information about the installed version of PostgreSQL
+* [postgresql.conftool](https://manpages.ubuntu.com/manpages/focal/man1/pg_conftool.1.html) - read and edit PostgreSQL cluster configuration files
 
 <details><summary>Example for <code>postgresql.config</code></summary>
 
@@ -152,6 +153,38 @@ LDFLAGS_EX =
 LDFLAGS_SL = 
 LIBS = -lpgcommon -lpgport -lselinux -lzstd -llz4 -lxslt -lxml2 -lpam -lssl -lcrypto -lgssapi_krb5 -lz -lreadline -lm 
 VERSION = PostgreSQL 18.1 (Ubuntu 18.1-2)
+```
+</details>
+
+<details><summary>Example for <code>postgresql.conftool</code></summary>
+
+```shell
+> postgresql.conftool 18 main show max_connections
+max_connections = 100
+
+> postgresql.conftool 18 test1 show all
+data_directory = '/var/lib/postgresql/18/test1'
+datestyle = 'iso, mdy'
+default_text_search_config = 'pg_catalog.english'
+dynamic_shared_memory_type = posix
+external_pid_file = '/tmp/18-test1.pid'
+hba_file = '/etc/postgresql/18/test1/pg_hba.conf'
+ident_file = '/etc/postgresql/18/test1/pg_ident.conf'
+lc_messages = 'C.UTF-8'
+lc_monetary = 'C.UTF-8'
+lc_numeric = 'C.UTF-8'
+lc_time = 'C.UTF-8'
+log_timezone = UTC
+max_connections = 100
+max_wal_size = 1GB
+min_wal_size = 80MB
+port = 5435
+shared_buffers = 128MB
+timezone = UTC
+unix_socket_directories = '/tmp'
+
+> postgresql.conftool 18 main edit
+...
 ```
 </details>
 
@@ -244,7 +277,7 @@ Reuse slot:
 ```shell
 > postgresql.conftool 18 main edit # set wal_level=logical !
 
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main restart
+> sudo snap restart postgresql
 
 > postgresql.conftool 18 main show wal_level
 wal_level = logical

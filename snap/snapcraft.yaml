@@ -112,6 +112,8 @@ apps:
     command: usr/bin/pg_basebackup
     plugs:
       - network
+  conftool:
+    command: conftool.sh
   ctl:
     command: ctl.sh
     plugs:
