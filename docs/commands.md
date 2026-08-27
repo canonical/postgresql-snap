@@ -1,6 +1,6 @@
 # Commands
 
-The [PostgreSQL snap](https://snapcraft.io/postgresql) ships a set of useful tools for managing your application - including cluster management, health checks, backups, and more.
+The [PostgreSQL snap](https://snapcraft.io/postgresql) ships a set of useful tools for managing your application - including health checks, backups, and more.
 
 
 ## PostgreSQL clients
@@ -19,115 +19,6 @@ postgres=# \du+
  Role name |                         Attributes                         | Description 
 -----------+------------------------------------------------------------+-------------
  postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS | 
-```
-</details>
-
-## Cluster management
-
-Those tools are Ubuntu/Debian-specific wrappers around '[initdb](https://www.postgresql.org/docs/current/app-initdb.html)' and '[pg_ctl](https://www.postgresql.org/docs/current/app-pg-ctl.html)' precisely for the purpose of providing a simpler interface for managing multiple postgresql instances on the same host:
-
-* [postgresql.lsclusters](https://manpages.ubuntu.com/manpages/noble/en/man1/pg_lsclusters.1.html) - show information about all PostgreSQL clusters
-* [postgresql.ctlcluster](https://manpages.ubuntu.com/manpages/noble/en/man1/pg_ctlcluster.1.html) - start/stop/restart/reload a PostgreSQL cluster
-* [postgresql.createcluster](https://manpages.ubuntu.com/manpages/noble/en/man1/pg_createcluster.1.html) - create a new PostgreSQL cluster
-* [postgresql.renamecluster](https://manpages.ubuntu.com/manpages/noble/en/man1/pg_renamecluster.1.html) - rename a PostgreSQL cluster
-* [postgresql.dropcluster](https://manpages.ubuntu.com/manpages/noble/en/man1/pg_dropcluster.1.html) - completely delete a PostgreSQL cluster
-
-<details><summary>Example for <code>postgresql.lsclusters</code></summary>
-
-```shell
-> postgresql.lsclusters
-Ver Cluster Port Status Owner    Data directory                 Log file
-18  main    5432 online _daemon_ /var/lib/postgresql/18/main2   /var/log/postgresql/postgresql-18-main.log
-18  test    5434 online _daemon_ /var/lib/postgresql/18/test    /var/log/postgresql/postgresql-18-test.log
-18  test1   5433 online _daemon_ /var/lib/postgresql/18/test1   /var/log/postgresql/postgresql-18-test1.log
-18  test123 5435 online _daemon_ /var/lib/postgresql/18/test123 /var/log/postgresql/postgresql-18-test123.log
-```
-</details>
-
-<details><summary>Example for <code>postgresql.ctlcluster</code></summary>
-
-```shell
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main status
-pg_ctl: server is running (PID: 41805)
-...
-
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main stop
-
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main status
-pg_ctl: no server running
-
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main start
-
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 main status
-pg_ctl: server is running (PID: 42101)
-...
-```
-Usage:
-```shell
-Usage: postgresql.ctlcluster <version> <cluster> <action> [-- <pg_ctl options>]
-```
-</details>
-
-<details><summary>Example for <code>postgresql.createcluster</code></summary>
-
-```shell
-> sudo postgresql.createcluster 18 test1
-Creating new PostgreSQL cluster 18/test1
-...
-The cluster can be started with: 'postgresql.ctlcluster --skip-systemctl-redirect 18 test1 start'
-
-> postgresql.lsclusters 18 test1
-Ver Cluster Port Status Owner    Data directory               Log file
-18  test1   5435 down   _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
-
-> sudo postgresql.ctlcluster --skip-systemctl-redirect 18 test1 start
-
-> postgresql.lsclusters 18 test1
-Ver Cluster Port Status Owner    Data directory               Log file
-18  test1   5435 online _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
-
-> postgresql.psql -U postgres -h /tmp -p 5435 -d postgres
-psql (18.1 (Ubuntu 18.1-2))
-Type "help" for help.
-
-postgres=# 
-```
-</details>
-
-<details><summary>Example for <code>postgresql.renamecluster</code></summary>
-
-```shell
-> postgresql.lsclusters 18
-Ver Cluster Port Status Owner    Data directory               Log file
-18  main    5432 online _daemon_ /var/lib/postgresql/18/main  /var/log/postgresql/postgresql-18-main.log
-18  test1   5433 online _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
-
-> sudo postgresql.renamecluster 18 test1 test123
-Stopping cluster 18 test1 ...
-Warning: systemd does not know about the new cluster yet. Operations like "service postgresql start" will not handle it. To fix, run:
-  sudo systemctl daemon-reload
-Starting cluster 18 test123 ...
-Warning: the cluster will not be running as a systemd service. Consider using systemctl:
-  sudo systemctl start postgresql@18-test123
-
-> postgresql.lsclusters 18
-Ver Cluster Port Status Owner    Data directory                 Log file
-18  main    5432 online _daemon_ /var/lib/postgresql/18/main    /var/log/postgresql/postgresql-18-main.log
-18  test123 5433 online _daemon_ /var/lib/postgresql/18/test123 /var/log/postgresql/postgresql-18-test123.log
-```
-</details>
-
-<details><summary>Example for <code>postgresql.dropcluster</code></summary>
-
-```shell
-> postgresql.lsclusters 18 test123
-Ver Cluster   Port Status Owner    Data directory               Log file
-18  test123   5433 online _daemon_ /var/lib/postgresql/18/test1 /var/log/postgresql/postgresql-18-test1.log
-
-> sudo postgresql.dropcluster --stop 18 test123
-
-> postgresql.lsclusters 18 test123
-Error: Cluster 18 test123 does not exist
 ```
 </details>
 
