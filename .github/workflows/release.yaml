@@ -13,7 +13,7 @@ on:
 jobs:
   ci-tests:
     name: Tests
-    uses: ./.github/workflows/ci.yaml
+    uses: $/.github/workflows/ci.yaml
     permissions:
       contents: read
 
