@@ -46,9 +46,13 @@ snapcraft test -- spread/tests/smoke # run one test suite
 snapcraft test --debug               # to open shell for failed test
 ```
 
-## License
+## License and trademark
 
-The PostgreSQL Snap is free software, distributed under the Apache
-Software License, version 2.0. See
-[LICENSE](https://github.com/canonical/postgresql-snap/blob/14/edge/LICENSE)
-for more information.
+The PostgreSQL Snap is free software, distributed under the
+[Apache Software License, version 2.0](https://github.com/canonical/postgresql-snap/blob/16/edge/LICENSE).
+It installs, operates and depends on [PostgreSQL](https://www.postgresql.org/ftp/source/),
+which is licensed under the [PostgreSQL License](https://www.postgresql.org/about/licence/),
+a liberal Open Source license similar to the BSD or MIT licenses.
+
+PostgreSQL is a trademark or registered trademark of PostgreSQL Global Development Group.
+Other trademarks are property of their respective owners.
