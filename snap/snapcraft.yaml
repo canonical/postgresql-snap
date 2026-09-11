@@ -7,7 +7,7 @@ description: |
   system emphasizing extensibility and SQL compliance.
 title: PostgreSQL
 contact: https://matrix.to/#/#charmhub-data-platform:ubuntu.com
-license: Apache-2.0
+license: "Apache-2.0 AND PostgreSQL"
 icon: snap/gui/icon.png
 issues: https://github.com/canonical/postgresql-snap/issues
 source-code: https://github.com/canonical/postgresql-snap
