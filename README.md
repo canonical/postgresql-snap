@@ -54,5 +54,6 @@ It installs, operates and depends on [PostgreSQL](https://www.postgresql.org/ftp
 which is licensed under the [PostgreSQL License](https://www.postgresql.org/about/licence/),
 a liberal Open Source license similar to the BSD or MIT licenses.
 
-PostgreSQL is a trademark or registered trademark of PostgreSQL Global Development Group.
+Postgres, PostgreSQL, Slonik Logo are trademarks or registered trademarks of [PGCA](https://www.postgres.ca/).
 Other trademarks are property of their respective owners.
+Canonical's PostgreSQL offerings are not sponsored, endorsed, or affiliated with PGCA.
