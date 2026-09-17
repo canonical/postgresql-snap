@@ -33,6 +33,7 @@ if [ "$count" -ne 1 ]; then
     exit 1
 fi
 
+# In the future, we plan to fully remove the postgresql-common cluster wrappers from the PostgreSQL snap. At that time, we may modify the data directory to not include a cluster name. To keep our options open in the future (without creating risk of data loss when [accidentally] refreshing to old snap revision), block refresh from a snap with a data directory format this snap revision does not recognize. Also, if we implement in-place upgrades in the future, depending on if we implement it automatically during snap refresh or as a manual user-initiated step, the presence of a data directory may not be enough of an indicator if the refresh is compatible (we may, for example, write compatibility information to disk that this snap revision does not recognize).
 if [ ! -d "$datadir/$ver/main" ]; then
     echo "ERROR: No 'main' cluster in $datadir/$ver. Refresh aborted, rolling back." >&2
     exit 1
