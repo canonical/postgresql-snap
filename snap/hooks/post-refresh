@@ -5,8 +5,8 @@
 # snapd roll back to the previous revision.
 # To upgrade, use pg_dumpall --globals-only + pg_dump, then restore.
 
-#The reason not to use epochs is because in case of a major upgrade,
-#they force the snap to refresh to each of the intermediate major versions
+#The reason not to use epochs is because in the future if we implement in-place major upgrades,
+# epochs would force the snap to refresh to each of the intermediate major versions
 #in order to do the migration (i.e going from 16 to 18 would require an
 #intermediate upgrade to 17), whereas pg_upgrade can do direct major upgrades.
 
