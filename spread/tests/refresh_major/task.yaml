@@ -1,0 +1,39 @@
+summary: PostgreSQL major version refresh protection tests
+
+execute: |
+  echo "Testing refresh from 16/stable to a different major version is blocked..."
+  SNAP_VERSION=$(awk -F\' '/version/{print $2}' "${PROJECT_PATH}"/snap/snapcraft.yaml)
+  SNAP_MAJOR="${SNAP_VERSION%%.*}"
+
+  echo "Replace the snap under test with 16/stable from the store..."
+  snap remove postgresql --purge --terminate
+  snap install postgresql --channel=16/stable --jailmode
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  postgresql.psql -U postgres -h /tmp -c "SELECT version();" | grep "^ PostgreSQL 16"
+
+  echo "Create test data on PostgreSQL 16..."
+  postgresql.psql -U postgres -h /tmp -c "
+    CREATE TABLE test_refresh (id SERIAL PRIMARY KEY, name TEXT);
+    INSERT INTO test_refresh (name) VALUES ('before');
+  "
+
+  echo "Refresh to the snap under test (PostgreSQL ${SNAP_MAJOR}) must be aborted by the post-refresh hook..."
+  if snap install "$CRAFT_ARTIFACT" --dangerous --jailmode > /tmp/refresh.log 2>&1; then
+    cat /tmp/refresh.log
+    echo "ERROR: Refresh from PostgreSQL 16 to ${SNAP_MAJOR} was not blocked" >&2
+    exit 1
+  fi
+  cat /tmp/refresh.log
+  grep "Run post-refresh hook" /tmp/refresh.log
+  grep "Data is from PostgreSQL 16 but this revision provides ${SNAP_MAJOR}" /tmp/refresh.log
+
+  echo "Ensure snapd rolled back to 16/stable and the data is intact..."
+  snap list postgresql | grep "16/stable"
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  postgresql.psql -U postgres -h /tmp -c "SELECT version();" | grep "^ PostgreSQL 16"
+  postgresql.psql -U postgres -h /tmp -c "SELECT * FROM test_refresh;" | grep before
+  postgresql.psql -U postgres -h /tmp -c "INSERT INTO test_refresh (name) VALUES ('after');"
+  test -d /var/snap/postgresql/common/var/lib/postgresql/16/main
+  test ! -d "/var/snap/postgresql/common/var/lib/postgresql/${SNAP_MAJOR}"
+
+  echo "Major version refresh protection test completed."
