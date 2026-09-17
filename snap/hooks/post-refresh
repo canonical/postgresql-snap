@@ -34,6 +34,8 @@ if [ "$count" -ne 1 ]; then
 fi
 
 if [ "$ver" != "${SNAP_VERSION%%.*}" ]; then
-    echo "ERROR: Data is from PostgreSQL $ver but this revision provides ${SNAP_VERSION%%.*}. Stay on $ver/* or migrate with pg_dump/pg_restore. Refresh aborted, rolling back." >&2
+    echo "ERROR: Data is from PostgreSQL $ver but this revision provides ${SNAP_VERSION%%.*}. \
+    In order to migrate between major versions, use pg_dump/pg_restore or check for new snap revision \
+    which may support in-place upgrades. Refresh aborted, rolling back." >&2
     exit 1
 fi
