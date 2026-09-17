@@ -1,0 +1,41 @@
+#!/bin/sh
+# Abort refreshes that change the PostgreSQL major version.
+# Data in $SNAP_COMMON is only readable by the same major version, and
+# pg_upgrade can't run without the old binaries. A non-zero exit makes
+# snapd roll back to the previous revision.
+# To upgrade, use pg_dumpall --globals-only + pg_dump, then restore.
+
+#The reason not to use epochs is because in the future if we implement in-place major upgrades,
+# epochs would force the snap to refresh to each of the intermediate major versions
+#in order to do the migration (i.e going from 16 to 18 would require an
+#intermediate upgrade to 17), whereas pg_upgrade can do direct major upgrades.
+
+set -eu
+
+datadir="$SNAP_COMMON/var/lib/postgresql"
+
+count=0
+ver=""
+
+for d in "$datadir"/*/; do
+    [ -d "$d" ] || continue
+    count=$((count + 1))
+    ver=$(basename "$d")
+done
+
+if [ "$count" -eq 0 ]; then
+    echo "ERROR: No data directory found in $datadir. Refresh aborted, rolling back." >&2
+    exit 1
+fi
+
+if [ "$count" -ne 1 ]; then
+    echo "ERROR: Expected one version directory in $datadir, found $count. Refresh aborted, rolling back." >&2
+    exit 1
+fi
+
+if [ "$ver" != "${SNAP_VERSION%%.*}" ]; then
+    echo "ERROR: Data is from PostgreSQL $ver but this revision provides ${SNAP_VERSION%%.*}. \
+    In order to migrate between major versions, use pg_dump/pg_restore or check for new snap revision \
+    which may support in-place upgrades. Refresh aborted, rolling back." >&2
+    exit 1
+fi
