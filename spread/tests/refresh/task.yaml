@@ -1,0 +1,38 @@
+summary: PostgreSQL snap refresh stable => PR test
+
+execute: |
+  # TODO: switch from 18/edge to 18/stable once released
+  echo "Reinstalling snap from PR to 18/edge..."
+  snap remove postgresql --purge --terminate
+  snap install postgresql --channel 18/edge
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  snap services postgresql | grep -E "postgresql.postgresql\s+enabled\s+active"
+
+  echo "Creating test data..."
+  postgresql.psql -U postgres -h /tmp -c "
+    CREATE TABLE refresh (id SERIAL PRIMARY KEY, name TEXT);
+    INSERT INTO refresh (name) VALUES ('test1');
+  "
+  postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test1"
+
+  echo "Refresh to the local PR snap"
+  if ! snap install "$CRAFT_ARTIFACT" --dangerous --jailmode > /tmp/refresh.log 2>&1; then
+    cat /tmp/refresh.log
+    echo "ERROR: Refresh from PostgreSQL 16 to PR code has failed" >&2
+    exit 1
+  fi
+  grep -E "postgresql [0-9]+\.[0-9]+ installed" /tmp/refresh.log
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  snap services postgresql | grep -E "postgresql.postgresql\s+enabled\s+active"
+
+  echo "Ensure data is still writable..."
+  postgresql.psql -U postgres -h /tmp -c "SELECT * from refresh;"
+
+  postgresql.psql -U postgres -h /tmp -c "
+    INSERT INTO refresh (name) VALUES ('test2');
+  "
+
+  postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test1"
+  postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test2"
+
+  echo "Test refresh completed."
