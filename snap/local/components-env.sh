@@ -4,8 +4,9 @@
 # Extensions can be added to the snap in two ways, both using the same layout:
 #   lib/*.so           -> appended to dynamic_library_path
 #   share/extension/*  -> parent dir appended to extension_control_path (PG >= 18)
-#   manifest           -> optional `PRELOAD=<lib>` appended to shared_preload_libraries
-#                         and `VERSION=<ver>` (reported in snap.<name>)
+#   manifest           -> optional `PRELOAD=<lib>` appended to shared_preload_libraries,
+#                         `JIT_PROVIDER=<lib>` sets jit_provider (see below),
+#                         `VERSION=<ver>` (reported in snap.<name>)
 #   postgresql.conf    -> optional GUCs copied verbatim (extension settings)
 # 1. snap components (`snap install postgresql+pg-cron`), mounted read-only
 #    under $SNAP/../components/$SNAP_REVISION/<name>/
@@ -66,6 +67,11 @@ out="$conf_d/00-snap-components.conf"
 libpath="$(conf_get dynamic_library_path)";    libpath="${libpath:-\$libdir}"
 ctlpath="$(conf_get extension_control_path)";  ctlpath="${ctlpath:-\$system}"
 preload="$(conf_get shared_preload_libraries)"
+jit_provider=""
+# PostgreSQL loads the JIT provider from "<pkglibdir>/<jit_provider>.so" only
+# (never via dynamic_library_path), so a provider in a component is reached
+# with a relative path that climbs out of the read-only $libdir.
+pkglib_up="$(printf '../%.0s' $(seq "$("$SNAP/usr/bin/pg_config" --pkglibdir | tr -cd '/' | wc -c)"))"
 extra_comp=""   # postgresql.conf snippets from components (written last: win)
 extra_plug=""   # postgresql.conf snippets from extension snaps
 report=""       # snap.<name> = '<origin> <version>' lines
@@ -73,15 +79,18 @@ comps=" "       # names of installed components, for precedence
 
 # add_ext <dir> <origin>: register one extension directory.
 add_ext() {
-  local dir="$1" origin="$2" name lib ver snippet
+  local dir="$1" origin="$2" name lib ver snippet jit
   name="$(basename "$dir")"
   [ -d "$dir/lib" ]             && libpath="$libpath:$dir/lib"
   [ -d "$dir/share/extension" ] && ctlpath="$ctlpath:$dir/share"  # PG appends /extension
-  lib=""; ver=""
+  lib=""; ver=""; jit=""
   if [ -f "$dir/manifest" ]; then
     lib="$(sed -n 's/^PRELOAD=//p' "$dir/manifest" | tail -1)"
     ver="$(sed -n 's/^VERSION=//p' "$dir/manifest" | tail -1)"
+    jit="$(sed -n 's/^JIT_PROVIDER=//p' "$dir/manifest" | tail -1)"
   fi
+  [ -n "$jit" ] && [ -f "$dir/lib/$jit.so" ] && \
+    jit_provider="$pkglib_up${dir#/}/lib/$jit"
   [ -z "$ver" ] && [ -f "$dir/meta/component.yaml" ] && \
     ver="$(sed -n 's/^version:[[:space:]]*//p' "$dir/meta/component.yaml" | tail -1)"
   # A malformed line in conf.d stops the server: only keep safe characters
@@ -131,6 +140,7 @@ mkdir -p "$conf_d"
   echo "dynamic_library_path = '$libpath'"
   echo "extension_control_path = '$ctlpath'"
   [ -n "$preload" ] && echo "shared_preload_libraries = '$preload'"
+  [ -n "$jit_provider" ] && echo "jit_provider = '$jit_provider'"
   [ -n "$extra_plug" ] && echo "$extra_plug"
   [ -n "$extra_comp" ] && echo "$extra_comp"
   if [ -n "$report" ]; then

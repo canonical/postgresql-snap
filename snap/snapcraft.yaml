@@ -29,6 +29,9 @@ system-usernames:
 # share/extension/*, an optional `manifest` (PRELOAD=<lib>) and an optional
 # postgresql.conf snippet (both kept in snap/local/components/<name>/), all
 # consumed by components-env.sh at daemon start. See docs/extensions.md.
+# `snap install postgresql` is equivalent to apt's postgresql-18: all contrib
+# modules are in the base snap. Components are what apt also keeps separate
+# (jit) plus third-party extensions.
 # Versions are hard-coded: craftctl rejects hyphenated variable names such as
 # components.pg-cron.version, so adopt-info can't be used.
 components:
@@ -53,21 +56,14 @@ components:
       Detailed session and object audit logging. Requires a daemon restart
       after install/remove (adds itself to shared_preload_libraries).
     version: '18.0'  # postgresql-18-pgaudit in the Ubuntu archive
-  # contrib modules split out of the base snap (same version as the snap)
-  pg-stat-statements:
+  # PostgreSQL's LLVM JIT, a separate package in apt too (postgresql-18-jit).
+  # The base works without it (pg_jit_available() = false). Version = snap's.
+  jit:
     type: standard
-    summary: pg_stat_statements contrib module for PostgreSQL 18
+    summary: LLVM JIT compiler for PostgreSQL 18
     description: |
-      Track planning and execution statistics of all SQL statements. Requires
-      a daemon restart after install/remove (adds itself to
-      shared_preload_libraries).
-    version: '18.6'
-  pg-trgm:
-    type: standard
-    summary: pg_trgm contrib module for PostgreSQL 18
-    description: |
-      Trigram-based text similarity and index support. Requires a daemon
-      restart after install/remove.
+      Just-in-time compilation of expressions and tuple deforming (llvmjit,
+      libLLVM). Requires a daemon restart after install/remove.
     version: '18.6'
 
 plugs:
@@ -243,17 +239,12 @@ parts:
       - -usr/lib/*/libicutest.so*
       - -usr/lib/*/libicutu.so*
       - -usr/lib/*/liburing-ffi.so*
+      # The JIT provider and LLVM live in the `jit` component. What the server
+      # looks up under the compiled-in $libdir (llvmjit_types.bc, bitcode/)
+      # stays here: it is only used once llvmjit is loaded.
+      - -usr/lib/postgresql/18/lib/llvmjit.so
+      - -usr/lib/*/libLLVM*
     organize:
-      # contrib modules shipped as components instead of in the base snap.
-      # Their JIT bitcode stays in $libdir/bitcode (looked up there by the
-      # server, harmless without the module).
-      usr/lib/postgresql/18/lib/pg_stat_statements.so: >-
-        (component/pg-stat-statements)/lib/pg_stat_statements.so
-      usr/share/postgresql/18/extension/pg_stat_statements*: >-
-        (component/pg-stat-statements)/share/extension/
-      usr/lib/postgresql/18/lib/pg_trgm.so: (component/pg-trgm)/lib/pg_trgm.so
-      usr/share/postgresql/18/extension/pg_trgm*: >-
-        (component/pg-trgm)/share/extension/
       etc/postgresql: (default)/default-config/etc/postgresql
       etc/postgresql-common: (default)/default-config/etc/postgresql-common
       var/lib/postgresql: (default)/default-config/var/lib/postgresql
@@ -280,9 +271,9 @@ parts:
       createcluster.conf: >-
         (default)/default-config/etc/postgresql-common/createcluster.conf
       # Static component files (manifest, postgresql.conf)
+      components/jit: (component/jit)
       components/pg-cron: (component/pg-cron)
       components/pgaudit: (component/pgaudit)
-      components/pg-stat-statements: (component/pg-stat-statements)
     stage:
       - -components  # emptied by organize above
 
@@ -325,3 +316,29 @@ parts:
     override-build: *deb-component
     organize:
       comp: (component/pgaudit)
+  # --- component: jit ------------------------------------------------------
+  # llvmjit.so (postgresql-18-jit) + libLLVM (libllvm21). Everything else
+  # they need is in core26 or the base snap. RUNPATH=$ORIGIN lets llvmjit.so
+  # find libLLVM next to it when the server dlopen()s it from the component.
+  jit:
+    plugin: nil
+    after: [postgres-debs]
+    build-packages:
+      - patchelf
+    override-build: |
+      set -e
+      apt-get download postgresql-18-jit libllvm21
+      for deb in *.deb; do
+        echo "$deb version: $(dpkg-deb -f "$deb" Version)"
+        dpkg-deb -x "$deb" x
+      done
+      OUT="$CRAFT_PART_INSTALL/comp"
+      install -Dm644 -t "$OUT/lib" x/usr/lib/postgresql/18/lib/llvmjit.so \
+        x/usr/lib/*/libLLVM.so.*
+      patchelf --set-rpath '$ORIGIN' "$OUT/lib/llvmjit.so"
+      install -Dm644 x/usr/share/doc/postgresql-18-jit/copyright \
+        "$OUT/licenses/COPYRIGHT-postgresql-18-jit"
+      install -Dm644 x/usr/share/doc/libllvm21/copyright \
+        "$OUT/licenses/COPYRIGHT-libllvm21"
+    organize:
+      comp: (component/jit)

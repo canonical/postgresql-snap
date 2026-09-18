@@ -1,25 +1,33 @@
-summary: Fresh install of PostgreSQL together with all extension components
+summary: Fresh install of PostgreSQL together with all components
 
 execute: |
   echo "Locating the components built next to the snap..."
-  COMPS="$(ls "${PROJECT_PATH}"/postgresql+*.comp 2>/dev/null)"
-  if [ -z "$COMPS" ]; then
-    echo "ERROR: postgresql+*.comp not found in ${PROJECT_PATH} (snapcraft pack builds them next to the .snap)" >&2
-    exit 1
-  fi
-  NAMES="pg-cron pg-stat-statements pg-trgm pgaudit pgvector"
+  # Only the components this snap declares: stale .comp files from earlier
+  # builds may sit next to it (snapcraft pack does not remove them).
+  NAMES="$(snap components postgresql | awk 'NR > 1 {sub("postgresql\\+", "", $1); print $1}' | sort | tr '\n' ' ')"
+  test "$NAMES" = "jit pg-cron pgaudit pgvector "
+  COMPS=""
+  for name in $NAMES; do
+    comp="$(ls "${PROJECT_PATH}/postgresql+${name}_"*.comp 2>/dev/null | head -1)"
+    if [ -z "$comp" ]; then
+      echo "ERROR: postgresql+${name}_*.comp not found in ${PROJECT_PATH} (snapcraft pack builds it next to the .snap)" >&2
+      exit 1
+    fi
+    COMPS="$COMPS $comp"
+  done
   PSQL="postgresql.psql -U postgres -h /tmp -Atq"
-  EXTS="('pg_cron', 'pg_stat_statements', 'pg_trgm', 'pgaudit', 'vector')"
+  EXTS="('pg_cron', 'pgaudit', 'vector')"
 
-  echo "The base snap ships none of the component extensions..."
+  echo "The base snap is apt's postgresql-18: contrib is there, components are not..."
   for name in $NAMES; do
     snap components postgresql | grep -E "postgresql\+$name\s+available\s+standard"
   done
   test -z "$($PSQL -c "SELECT name FROM pg_available_extensions WHERE name IN $EXTS;")"
-  test ! -e /snap/postgresql/current/usr/lib/postgresql/18/lib/pg_stat_statements.so
-  test ! -e /snap/postgresql/current/usr/lib/postgresql/18/lib/pg_trgm.so
+  $PSQL -c "SELECT count(*) FROM pg_available_extensions WHERE name IN ('pg_stat_statements', 'pg_trgm', 'hstore', 'pgcrypto');" | grep -x 4
+  $PSQL -c "SELECT pg_jit_available();" | grep -x f
+  test ! -e /snap/postgresql/current/usr/lib/postgresql/18/lib/llvmjit.so
 
-  echo "Installing the snap and all components in one go (snap install postgresql+pg-cron+...)..."
+  echo "Installing the snap and all components in one go (snap install postgresql+jit+pg-cron+...)..."
   snap remove postgresql --purge --terminate
   # shellcheck disable=SC2086
   snap install "$CRAFT_ARTIFACT" $COMPS --dangerous --jailmode
@@ -29,22 +37,21 @@ execute: |
   timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
   snap services postgresql | grep -E "postgresql.postgresql\s+enabled\s+active"
 
-  echo "Preload libraries are loaded on the very first start, no restart needed..."
-  $PSQL -c "SHOW shared_preload_libraries;" | grep -x "pg_cron,pg_stat_statements,pgaudit"
-  $PSQL -c "SELECT count(*) FROM pg_available_extensions WHERE name IN $EXTS;" | grep -x 5
+  echo "Everything is loaded on the very first start, no restart needed..."
+  $PSQL -c "SHOW shared_preload_libraries;" | grep -x "pg_cron,pgaudit"
+  $PSQL -c "SELECT count(*) FROM pg_available_extensions WHERE name IN $EXTS;" | grep -x 3
+  $PSQL -c "SELECT pg_jit_available();" | grep -x t
 
   echo "Every extension can be created and used..."
   $PSQL -c "CREATE EXTENSION pg_cron;"
   $PSQL -c "SELECT cron.schedule('noop', '* * * * *', 'SELECT 1');" | grep -x 1
-  $PSQL -c "CREATE EXTENSION pg_stat_statements;"
-  $PSQL -c "SELECT count(*) > 0 FROM pg_stat_statements;" | grep -x t
-  $PSQL -c "CREATE EXTENSION pg_trgm;"
-  $PSQL -c "SELECT similarity('postgresql', 'postgresql');" | grep -x 1
   $PSQL -c "CREATE EXTENSION vector;"
   $PSQL -c "SELECT '[1,2,3]'::vector <-> '[1,2,4]'::vector;" | grep -x 1
   $PSQL -c "CREATE EXTENSION pgaudit;"
   $PSQL -c "SHOW pgaudit.log;" | grep -x none
-  $PSQL -c "SELECT count(*) FROM pg_extension WHERE extname IN $EXTS;" | grep -x 5
+  $PSQL -c "CREATE EXTENSION pg_trgm;"
+  $PSQL -c "SELECT similarity('postgresql', 'postgresql');" | grep -x 1
+  $PSQL -c "SELECT count(*) FROM pg_extension WHERE extname IN $EXTS;" | grep -x 3
 
   echo "The components follow the snap across a refresh..."
   # Store refreshes carry components along; a local --dangerous refresh only
@@ -56,11 +63,11 @@ execute: |
   test "$NEWREV" != "$REV"
   for name in $NAMES; do
     snap components postgresql | grep -E "postgresql\+$name\s+installed\s+standard"
-    test -d "/snap/postgresql/components/$NEWREV/$name/share/extension"
+    test -d "/snap/postgresql/components/$NEWREV/$name/lib"
   done
   timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
-  $PSQL -c "SHOW shared_preload_libraries;" | grep -x "pg_cron,pg_stat_statements,pgaudit"
+  $PSQL -c "SHOW shared_preload_libraries;" | grep -x "pg_cron,pgaudit"
+  $PSQL -c "SELECT pg_jit_available();" | grep -x t
   $PSQL -c "SELECT jobname FROM cron.job;" | grep -x noop
-  $PSQL -c "SELECT similarity('postgresql', 'postgresql');" | grep -x 1
 
   echo "Fresh install with all components test completed."

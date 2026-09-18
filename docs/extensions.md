@@ -6,10 +6,10 @@ Lifecycle:
 ```shell
 sudo snap install postgresql+pg-cron+pgvector          # snap plus two components
 
-sudo snap install postgresql+pg-cron+pgvector+pgaudit+pg-stat-statements+pg-trgm # all at once
+sudo snap install postgresql+jit+pg-cron+pgvector+pgaudit          # all at once
 
-sudo snap install postgresql+pg-trgm                   # add one to an existing install
-sudo snap restart postgresql.postgresql                # enable newly added pg-trgm components
+sudo snap install postgresql+jit                       # add one to an existing install
+sudo snap restart postgresql.postgresql                # enable the newly added jit component
 
 snap components postgresql                             # list all available components
 snap component postgresql+pg-cron                      # describe a particular snap component
@@ -24,14 +24,13 @@ Status:
 ```shell
 > snap list postgresql
 Name        Version  Rev  Tracking   Publisher   Notes
-postgresql  18.6     272  18/edge/…  canonical✓  components[3/5]
+postgresql  18.6     272  18/edge/…  canonical✓  components[2/4]
 
 > snap components postgresql
 Component                      Status     Type
-postgresql+pg-trgm             installed  standard
+postgresql+jit                 installed  standard
 postgresql+pg-cron             installed  standard
-postgresql+pg-stat-statements  available  standard
-postgresql+pgaudit             installed  standard
+postgresql+pgaudit             available  standard
 postgresql+pgvector            available  standard
 
 > snap component postgresql+pg-cron
@@ -91,24 +90,24 @@ NOTICE:  pgaudit skipped: component not installed, or PostgreSQL not restarted s
 
 ## Scope
 
-Optional PostgreSQL extensions are shipped as
+`snap install postgresql` is the equivalent of apt's `postgresql-18` package:
+the server, the client tools and all contrib modules (`pg_stat_statements`,
+`pg_trgm`, `hstore`, `pgcrypto`, ...). Everything apt keeps in a separate
+package, plus third-party extensions, ships as
 [snap components](https://snapcraft.io/docs/components): small add-on packages
 that install next to the `postgresql` snap without duplicating PostgreSQL itself.
 They are built from the same Ubuntu archive as the snap, so the binaries always
 match the PostgreSQL version in the snap.
 
-| Component | Extension | Notes |
-|-----------|-----------|-------|
+| Component | Provides | Notes |
+|-----------|----------|-------|
+| `jit` | LLVM JIT compiler (`llvmjit`, `libLLVM`) | apt's `postgresql-18-jit`; without it `pg_jit_available()` is false and queries run interpreted |
 | `pg-cron` | [pg_cron](https://github.com/citusdata/pg_cron) | Adds itself to `shared_preload_libraries` |
 | `pgvector` | [pgvector](https://github.com/pgvector/pgvector) (`CREATE EXTENSION vector`) | |
 | `pgaudit` | [pgaudit](https://github.com/pgaudit/pgaudit) | Adds itself to `shared_preload_libraries` |
-| `pg-stat-statements` | [pg_stat_statements](https://www.postgresql.org/docs/current/pgstatstatements.html) | Contrib module, adds itself to `shared_preload_libraries` |
-| `pg-trgm` | [pg_trgm](https://www.postgresql.org/docs/current/pgtrgm.html) | Contrib module |
 
-The contrib modules `pg_stat_statements` and `pg_trgm` are no longer part of the
-base snap. If `postgresql.conf` lists `pg_stat_statements` in
-`shared_preload_libraries`, install the component before refreshing, otherwise
-PostgreSQL will not start.
+The JIT is the largest optional part of the snap (roughly a third of its
+size), which is why it is the one contrib-like piece that is a component.
 
 ## Install
 
