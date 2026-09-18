@@ -37,6 +37,13 @@ available for the new major before upgrading, for example
 The old cluster stays under `/var/snap/postgresql/common/var/lib/postgresql/16`
 until you delete it.
 
+snapd refuses to refresh a snap while one of its non-service apps is running.
+From this revision on, the client apps (`postgresql.psql`, `postgresql.dump`,
+...) are marked so that they never block a refresh; their connections drop when
+the service restarts, as they would anyway. Refreshing *from* an older revision
+that lacks this, such as the 16 track today, still requires closing open
+`postgresql.psql` sessions first.
+
 If the refresh happened without the component, PostgreSQL is not started and
 `postgresql.upgrade` explains what to install. `snap revert postgresql` returns
 to the previous revision at any point before the upgrade has run.
