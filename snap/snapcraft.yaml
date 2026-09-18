@@ -56,6 +56,17 @@ components:
       Detailed session and object audit logging. Requires a daemon restart
       after install/remove (adds itself to shared_preload_libraries).
     version: '18.0'  # postgresql-18-pgaudit in the Ubuntu archive
+  # Previous major's server binaries for in-place upgrades (pg_upgrade):
+  #   snap refresh postgresql+pg16 --channel 18/stable && postgresql.upgrade
+  pg16:
+    type: standard
+    summary: PostgreSQL 16 binaries for in-place upgrades to 18
+    description: |
+      Server binaries of the previous major (from Ubuntu 24.04's
+      postgresql-16), used only by `postgresql.upgrade` to migrate an
+      existing PostgreSQL 16 cluster to 18 with pg_upgrade. Remove after the
+      upgrade.
+    version: '16.15'  # postgresql-16 in noble-updates, printed at build time
   # PostgreSQL's LLVM JIT, a separate package in apt too (postgresql-18-jit).
   # The base works without it (pg_jit_available() = false). Version = snap's.
   jit:
@@ -187,6 +198,11 @@ apps:
     command: usr/bin/psql
     plugs:
       - network
+  upgrade:
+    command: upgrade.sh
+    plugs:  # pg_createcluster probes for a free port
+      - network
+      - network-bind
   postgresql:
     # components-env.sh regenerates conf.d/00-snap-components.conf from the
     # components mounted at $SNAP/../components/$SNAP_REVISION/ on every start.
@@ -342,3 +358,52 @@ parts:
         "$OUT/licenses/COPYRIGHT-libllvm21"
     organize:
       comp: (component/jit)
+  # --- component: pg16 -----------------------------------------------------
+  # Previous major's server from the Ubuntu 24.04 (noble) archive, plus the
+  # two libraries it needs that neither core26 nor this snap carry any more
+  # (ICU 74, libxml2.so.2). JIT is dropped: it would pull in LLVM 17.
+  # PostgreSQL finds its lib/ and share/ relative to the binary as long as
+  # the usr/lib/postgresql/16 + usr/share/postgresql/16 shape is preserved.
+  pg16:
+    plugin: nil
+    after: [postgres-debs]
+    override-build: |
+      set -e
+      case "$CRAFT_ARCH_BUILD_FOR" in
+        amd64) MIRROR=http://archive.ubuntu.com/ubuntu ;;
+        *)     MIRROR=http://ports.ubuntu.com/ubuntu-ports ;;
+      esac
+      cat > /etc/apt/sources.list.d/noble.sources <<EOS
+      Types: deb
+      URIs: $MIRROR
+      Suites: noble noble-updates noble-security
+      Components: main universe
+      Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+      EOS
+      apt-get update
+      for p in postgresql-16 libicu74 libxml2; do
+        apt-get download "$p/noble-security" 2>/dev/null \
+          || apt-get download "$p/noble-updates" 2>/dev/null \
+          || apt-get download "$p/noble"
+      done
+      rm /etc/apt/sources.list.d/noble.sources
+      for deb in *.deb; do
+        echo "$deb: $(dpkg-deb -f "$deb" Version)"
+        dpkg-deb -x "$deb" x
+      done
+      OUT="$CRAFT_PART_INSTALL/comp"
+      T="$CRAFT_ARCH_TRIPLET_BUILD_FOR"
+      install -d "$OUT/usr/lib/postgresql" "$OUT/usr/share/postgresql" \
+        "$OUT/libs" "$OUT/licenses"
+      cp -a x/usr/lib/postgresql/16 "$OUT/usr/lib/postgresql/"
+      cp -a x/usr/share/postgresql/16 "$OUT/usr/share/postgresql/"
+      rm -rf "$OUT/usr/lib/postgresql/16/lib/llvmjit.so" \
+        "$OUT/usr/lib/postgresql/16/lib/bitcode"
+      cp -a "x/usr/lib/$T/libicudata.so.74"* "x/usr/lib/$T/libicuuc.so.74"* \
+        "x/usr/lib/$T/libicui18n.so.74"* "x/usr/lib/$T/libxml2.so.2"* \
+        "$OUT/libs/"
+      for p in postgresql-16 libicu74 libxml2; do
+        cp "x/usr/share/doc/$p/copyright" "$OUT/licenses/COPYRIGHT-$p"
+      done
+    organize:
+      comp: (component/pg16)

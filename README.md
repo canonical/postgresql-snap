@@ -25,6 +25,15 @@ sudo snap install postgresql+pg-cron
 Extensions can also come from separate snaps connected to the `extensions`
 content plug, see [`extensions/`](/extensions/).
 
+## Upgrade between major versions
+
+```shell
+sudo snap refresh postgresql+pg16 --channel 18/stable
+sudo postgresql.upgrade
+```
+
+See [`docs/upgrade.md`](/docs/upgrade.md).
+
 ## Build the snap
 
 Clone the repository:

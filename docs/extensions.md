@@ -105,6 +105,7 @@ match the PostgreSQL version in the snap.
 | `pg-cron` | [pg_cron](https://github.com/citusdata/pg_cron) | Adds itself to `shared_preload_libraries` |
 | `pgvector` | [pgvector](https://github.com/pgvector/pgvector) (`CREATE EXTENSION vector`) | |
 | `pgaudit` | [pgaudit](https://github.com/pgaudit/pgaudit) | Adds itself to `shared_preload_libraries` |
+| `pg16` | PostgreSQL 16 server binaries | Only for [in-place upgrades](upgrade.md) with `postgresql.upgrade` |
 
 The JIT is the largest optional part of the snap (roughly a third of its
 size), which is why it is the one contrib-like piece that is a component.

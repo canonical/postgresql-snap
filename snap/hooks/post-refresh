@@ -13,35 +13,45 @@
 set -eu
 
 datadir="$SNAP_COMMON/var/lib/postgresql"
+new="${SNAP_VERSION%%.*}"
 
+# Clusters are <major>/main (Debian layout). Directories without a cluster
+# (leftovers) are ignored. After an in-place upgrade the old major's data
+# stays next to the new one until deleted, so several may exist.
 count=0
-ver=""
-
-for d in "$datadir"/*/; do
+old=""
+for d in "$datadir"/*/main; do
     [ -d "$d" ] || continue
+    ver=$(basename "$(dirname "$d")")
+    # In the future, we plan to fully remove the postgresql-common cluster wrappers from the PostgreSQL snap. At that time, we may modify the data directory to not include a cluster name. To keep our options open in the future (without creating risk of data loss when [accidentally] refreshing to old snap revision), block refresh from a snap with a data directory format this snap revision does not recognize. Also, if we implement in-place upgrades in the future, depending on if we implement it automatically during snap refresh or as a manual user-initiated step, the presence of a data directory may not be enough of an indicator if the refresh is compatible (we may, for example, write compatibility information to disk that this snap revision does not recognize).
+    if [ "$ver" = "$new" ]; then
+        exit 0  # data for this major exists: a regular refresh
+    fi
     count=$((count + 1))
-    ver=$(basename "$d")
+    old="$ver"
 done
 
 if [ "$count" -eq 0 ]; then
-    echo "ERROR: No data directory found in $datadir. Refresh aborted, rolling back." >&2
+    echo "ERROR: No 'main' cluster found in $datadir. Refresh aborted, rolling back." >&2
     exit 1
 fi
 
 if [ "$count" -ne 1 ]; then
-    echo "ERROR: Expected one version directory in $datadir, found $count. Refresh aborted, rolling back." >&2
+    echo "ERROR: No PostgreSQL $new cluster and $count clusters of other majors in $datadir. Refresh aborted, rolling back." >&2
     exit 1
 fi
 
-# In the future, we plan to fully remove the postgresql-common cluster wrappers from the PostgreSQL snap. At that time, we may modify the data directory to not include a cluster name. To keep our options open in the future (without creating risk of data loss when [accidentally] refreshing to old snap revision), block refresh from a snap with a data directory format this snap revision does not recognize. Also, if we implement in-place upgrades in the future, depending on if we implement it automatically during snap refresh or as a manual user-initiated step, the presence of a data directory may not be enough of an indicator if the refresh is compatible (we may, for example, write compatibility information to disk that this snap revision does not recognize).
-if [ ! -d "$datadir/$ver/main" ]; then
-    echo "ERROR: No 'main' cluster in $datadir/$ver. Refresh aborted, rolling back." >&2
-    exit 1
+# With the previous major's binaries installed as a component
+# (postgresql+pg16), the data can be migrated in place: keep the service
+# down (there is no $new cluster yet) until `postgresql.upgrade` runs.
+comp="$(dirname "$SNAP")/components/$SNAP_REVISION/pg$old"
+if [ -x "$comp/usr/lib/postgresql/$old/bin/pg_ctl" ]; then
+    echo "Data is from PostgreSQL $old, this revision provides $new. PostgreSQL stays stopped \
+    until 'sudo postgresql.upgrade' migrates the data (postgresql+pg$old is installed)." >&2
+    snapctl stop --disable postgresql.postgresql
+    exit 0
 fi
-
-if [ "$ver" != "${SNAP_VERSION%%.*}" ]; then
-    echo "ERROR: Data is from PostgreSQL $ver but this revision provides ${SNAP_VERSION%%.*}. \
-    In order to migrate between major versions, use pg_dump/pg_restore or check for new snap revision \
-    which may support in-place upgrades. Refresh aborted, rolling back." >&2
-    exit 1
-fi
+echo "ERROR: Data is from PostgreSQL $old but this revision provides $new. \
+To upgrade in place, refresh together with the postgresql+pg$old component and run \
+'postgresql.upgrade'; otherwise use pg_dump/pg_restore. Refresh aborted, rolling back." >&2
+exit 1

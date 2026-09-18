@@ -3,8 +3,9 @@ summary: Fresh install of PostgreSQL together with all components
 execute: |
   echo "Locating the components built next to the snap..."
   # Only the components this snap declares: stale .comp files from earlier
-  # builds may sit next to it (snapcraft pack does not remove them).
-  NAMES="$(snap components postgresql | awk 'NR > 1 {sub("postgresql\\+", "", $1); print $1}' | sort | tr '\n' ' ')"
+  # builds may sit next to it (snapcraft pack does not remove them). pg16 is
+  # for upgrades only (see upgrade_major) and left out here.
+  NAMES="$(snap components postgresql | awk 'NR > 1 {sub("postgresql\\+", "", $1); print $1}' | grep -v '^pg16$' | sort | tr '\n' ' ')"
   test "$NAMES" = "jit pg-cron pgaudit pgvector "
   COMPS=""
   for name in $NAMES; do
