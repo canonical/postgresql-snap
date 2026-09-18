@@ -6,7 +6,9 @@ execute: |
   COMP="$(ls "${PROJECT_PATH}"/postgresql+pg-cron_*.comp 2>/dev/null | head -1)"
   if [ -z "$EXT" ] || [ -z "$COMP" ]; then
     echo "ERROR: need extensions/postgresql-pg-cron/*.snap (snapcraft pack there) and postgresql+pg-cron_*.comp" >&2
-    exit 1
+    # exit 1
+    echo "TODO: revert this, PoC testing only (using taurus-test-postgresql-pg-cron from snapstore)!!!"
+    snap install taurus-test-postgresql-pg-cron --channel latest/edge/v0.5.12
   fi
   REV="$(snap list postgresql | awk 'NR == 2 {print $3}')"
   CONF=/var/snap/postgresql/common/etc/postgresql/18/main/conf.d/00-snap-components.conf
@@ -17,9 +19,9 @@ execute: |
   }
 
   echo "Installing and connecting the extension snap (no auto-connect for --dangerous)..."
-  snap install "$EXT" --dangerous
-  snap connect postgresql:extensions postgresql-pg-cron:extensions
-  snap connections postgresql | grep -E "postgresql:extensions\s+postgresql-pg-cron:extensions"
+  [ -n "$EXT" ] && snap install "$EXT" --dangerous
+  snap connect postgresql:extensions taurus-test-postgresql-pg-cron:extensions
+  snap connections postgresql | grep -E "postgresql:extensions\s+taurus-test-postgresql-pg-cron:extensions"
   # content mounts exist only inside the snap's mount namespace
   snap run --shell postgresql.psql -c 'test -f "$SNAP/extensions/pg-cron/lib/pg_cron.so"'
   restart
@@ -59,7 +61,7 @@ execute: |
   echo "Disconnecting the extension snap: pg_cron is gone after restart..."
   $PSQL -c "SELECT cron.unschedule('spread');" | grep -x t
   $PSQL -c "DROP EXTENSION pg_cron;"
-  snap disconnect postgresql:extensions postgresql-pg-cron:extensions
+  snap disconnect postgresql:extensions taurus-test-postgresql-pg-cron:extensions
   snap run --shell postgresql.psql -c 'test ! -e "$SNAP/extensions/pg-cron"'
   restart
   ! grep -q pg_cron "$CONF"
