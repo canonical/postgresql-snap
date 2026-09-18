@@ -1,0 +1,38 @@
+summary: Fresh install of PostgreSQL together with the pg_cron component
+
+execute: |
+  echo "Locating the pg-cron component built next to the snap..."
+  COMP="$(ls "${PROJECT_PATH}"/postgresql+pg-cron_*.comp 2>/dev/null | head -1)"
+  if [ -z "$COMP" ]; then
+    echo "ERROR: postgresql+pg-cron_*.comp not found in ${PROJECT_PATH} (snapcraft pack builds it next to the .snap)" >&2
+    exit 1
+  fi
+  PSQL="postgresql.psql -U postgres -h /tmp -Atq"
+
+  echo "Installing the snap and the component in one go (snap install postgresql+pg-cron)..."
+  snap remove postgresql --purge --terminate
+  snap install "$CRAFT_ARTIFACT" "$COMP" --dangerous --jailmode
+  snap components postgresql | grep -E "postgresql\+pg-cron\s+installed\s+standard"
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  snap services postgresql | grep -E "postgresql.postgresql\s+enabled\s+active"
+
+  echo "pg_cron is loaded on the very first start, no restart needed..."
+  $PSQL -c "SHOW shared_preload_libraries;" | grep -x pg_cron
+  $PSQL -c "CREATE EXTENSION pg_cron;"
+  $PSQL -c "SELECT extversion FROM pg_extension WHERE extname = 'pg_cron';" | grep -E "^[0-9]"
+  $PSQL -c "SELECT cron.schedule('noop', '* * * * *', 'SELECT 1');" | grep -x 1
+
+  echo "The component follows the snap across a refresh..."
+  # Store refreshes carry components along; a local --dangerous refresh only
+  # keeps them when the .comp is passed again, so pass both files.
+  REV="$(snap list postgresql | awk 'NR == 2 {print $3}')"
+  snap install "$CRAFT_ARTIFACT" "$COMP" --dangerous --jailmode
+  NEWREV="$(snap list postgresql | awk 'NR == 2 {print $3}')"
+  test "$NEWREV" != "$REV"
+  snap components postgresql | grep -E "postgresql\+pg-cron\s+installed\s+standard"
+  test -f "/snap/postgresql/components/$NEWREV/pg-cron/lib/pg_cron.so"
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  $PSQL -c "SHOW shared_preload_libraries;" | grep -x pg_cron
+  $PSQL -c "SELECT jobname FROM cron.job;" | grep -x noop
+
+  echo "Fresh install with component test completed."

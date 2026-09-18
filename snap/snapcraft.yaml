@@ -22,6 +22,24 @@ confinement: strict
 system-usernames:
   _daemon_: shared
 
+# Optional extensions shipped as snap components (snapd >= 2.67):
+#   snap install postgresql+pg-cron
+#   snap remove  postgresql+pg-cron
+# Each component is data-only (no PG binary is duplicated): lib/*.so,
+# share/extension/*, a `manifest` and an optional postgresql.conf snippet,
+# all consumed by components-env.sh at daemon start. See docs/extensions.md.
+components:
+  pg-cron:
+    type: standard
+    summary: pg_cron extension for PostgreSQL 18
+    description: |
+      Run periodic jobs in PostgreSQL. Requires a daemon restart after
+      install/remove (adds itself to shared_preload_libraries).
+    # Keep in sync with postgresql-18-cron in the Ubuntu archive (printed at
+    # build time). Can't use adopt-info: craftctl rejects hyphenated variable
+    # names such as components.pg-cron.version.
+    version: '1.6.7'
+
 plugs:
   shared-memory:
     private: true
@@ -137,6 +155,10 @@ apps:
     plugs:
       - network
   postgresql:
+    # components-env.sh regenerates conf.d/00-snap-components.conf from the
+    # components mounted at $SNAP/../components/$SNAP_REVISION/ on every start.
+    command-chain:
+      - components-env.sh
     command: >-
       ctl-cluster.sh --skip-systemctl-redirect --foreground 18 main start
     daemon: simple
@@ -185,10 +207,10 @@ parts:
       - -usr/lib/*/libicutu.so*
       - -usr/lib/*/liburing-ffi.so*
     organize:
-      etc/postgresql: default-config/etc/postgresql
-      etc/postgresql-common: default-config/etc/postgresql-common
-      var/lib/postgresql: default-config/var/lib/postgresql
-      var/log/postgresql: default-config/var/log/postgresql
+      etc/postgresql: (default)/default-config/etc/postgresql
+      etc/postgresql-common: (default)/default-config/etc/postgresql-common
+      var/lib/postgresql: (default)/default-config/var/lib/postgresql
+      var/log/postgresql: (default)/default-config/var/log/postgresql
       usr/share/doc/postgresql/copyright: licenses/COPYRIGHT-postgresql
       usr/share/doc/util-linux/copyright: licenses/COPYRIGHT-util-linux
       usr/share/doc/locales-all/copyright: licenses/COPYRIGHT-locales-all
@@ -203,3 +225,42 @@ parts:
   wrapper:
     plugin: dump
     source: snap/local
+    organize:
+      # Copied to $SNAP_COMMON/etc/postgresql-common by the install hook
+      createcluster.conf: >-
+        (default)/default-config/etc/postgresql-common/createcluster.conf
+
+  # --- component: pg-cron -------------------------------------------------
+  # Built from the archive deb so the .so matches postgresql-18's ABI/flags.
+  # Only the extension payload is routed to the component partition; the deb's
+  # dependency closure (postgresql-18 etc.) is deliberately NOT staged, which
+  # would otherwise overwrite the sed-patched files from postgres-debs.
+  pg-cron:
+    plugin: nil
+    after: [postgres-debs]
+    override-build: |
+      set -e
+      apt-get download postgresql-18-cron
+      DEB=$(ls postgresql-18-cron_*.deb)
+      echo "postgresql-18-cron version: $(dpkg-deb -f "$DEB" Version)"
+      X="$CRAFT_PART_INSTALL/x"
+      OUT="$CRAFT_PART_INSTALL/pg-cron"
+      dpkg-deb -x "$DEB" "$X"
+      install -Dm644 "$X/usr/lib/postgresql/18/lib/pg_cron.so" \
+        "$OUT/lib/pg_cron.so"
+      install -d "$OUT/share/extension"
+      cp "$X/usr/share/postgresql/18/extension/pg_cron"* "$OUT/share/extension/"
+      install -Dm644 "$X/usr/share/doc/postgresql-18-cron/copyright" \
+        "$OUT/licenses/COPYRIGHT-pg_cron"
+      # Consumed by components-env.sh at daemon start
+      cat > "$OUT/manifest" <<'MF'
+      PRELOAD=pg_cron
+      MF
+      cat > "$OUT/postgresql.conf" <<'CONF'
+      # pg_cron connects back to the server through libpq. Use the local socket
+      # (auth-local=trust in the snap): TCP to localhost requires a password.
+      cron.host = '/tmp'
+      CONF
+      rm -rf "$X"
+    organize:
+      pg-cron: (component/pg-cron)

@@ -13,6 +13,15 @@ For more information about using the PostgreSQL snap, including commands and exa
 sudo snap install postgresql
 ```
 
+## Install extensions
+
+Optional extensions such as [pg_cron](https://github.com/citusdata/pg_cron) are
+shipped as snap components, see [`docs/extensions.md`](/docs/extensions.md):
+
+```shell
+sudo snap install postgresql+pg-cron
+```
+
 ## Build the snap
 
 Clone the repository:
