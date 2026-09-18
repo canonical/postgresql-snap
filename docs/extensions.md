@@ -1,5 +1,96 @@
 # Extensions
 
+## Quick start
+
+Lifecycle:
+```shell
+sudo snap install postgresql+pg-cron+pgvector          # snap plus two components
+
+sudo snap install postgresql+pg-cron+pgvector+pgaudit+pg-stat-statements+pg-trgm # all at once
+
+sudo snap install postgresql+pg-trgm                   # add one to an existing install
+sudo snap restart postgresql.postgresql                # enable newly added pg-trgm components
+
+snap components postgresql                             # list all available components
+snap component postgresql+pg-cron                      # describe a particular snap component
+
+sudo snap remove postgresql+pg-cron+pgvector           # drop two, keep the snap with one extention
+sudo snap restart postgresql.postgresql                # disable removed pg-cron+pgvector components
+
+sudo snap remove postgresql                            # removes the snap and all its components
+```
+
+Status:
+```shell
+> snap list postgresql
+Name        Version  Rev  Tracking   Publisher   Notes
+postgresql  18.6     272  18/edge/…  canonical✓  components[3/5]
+
+> snap components postgresql
+Component                      Status     Type
+postgresql+pg-trgm             installed  standard
+postgresql+pg-cron             installed  standard
+postgresql+pg-stat-statements  available  standard
+postgresql+pgaudit             installed  standard
+postgresql+pgvector            available  standard
+
+> snap component postgresql+pg-cron
+component: postgresql+pg-cron
+type: standard
+summary: pg_cron extension for PostgreSQL 18
+description: |
+  Run periodic jobs in PostgreSQL. Requires a daemon restart after
+install/remove (adds itself to shared_preload_libraries).
+```
+
+Test command to check extentions availablility+usability:
+```shell
+postgresql.psql -U postgres -h /tmp -v ON_ERROR_STOP=1 <<'EOF'
+  DO $$
+  DECLARE
+    t record;
+    dir text;
+  BEGIN
+    FOR t IN SELECT * FROM (VALUES
+        ('pg_cron',            'pg-cron',            'SELECT cron.unschedule(cron.schedule(''ping'', ''* * * * *'', ''SELECT 1''))'),
+        ('pg_stat_statements', 'pg-stat-statements', 'SELECT count(*) FROM pg_stat_statements'),
+        ('pg_trgm',            'pg-trgm',            'SELECT similarity(''snap'', ''snap'')'),
+        ('vector',             'pgvector',           'SELECT ''[1,2,3]''::vector <-> ''[1,2,4]''::vector'),
+        ('pgaudit',            'pgaudit',            'SELECT current_setting(''pgaudit.log'')')
+      ) AS v(ext, comp, probe)
+    LOOP
+      dir := substring(current_setting('extension_control_path') FROM '[^:]*/' || t.comp || '/share');
+      IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = t.ext) THEN
+        EXECUTE format('CREATE EXTENSION IF NOT EXISTS %I', t.ext);
+        EXECUTE t.probe;
+        RAISE NOTICE '% ok', t.ext;
+      ELSIF dir IS NULL THEN
+        RAISE NOTICE '% skipped: component not installed, or PostgreSQL not restarted since installing it', t.ext;
+      ELSIF pg_stat_file(dir || '/extension', true) IS NULL THEN
+        RAISE NOTICE '% skipped: component removed, restart PostgreSQL to unload it', t.ext;
+      ELSE
+        RAISE EXCEPTION '% is in extension_control_path but not available: snap component broken?', t.ext;
+      END IF;
+    END LOOP;
+  END
+  $$;
+EOF
+```
+
+PostgreSQL check example:
+```shell
+NOTICE:  extension "pg_cron" already exists, skipping
+NOTICE:  pg_cron ok
+NOTICE:  pg_stat_statements skipped: component not installed, or PostgreSQL not restarted since installing it
+NOTICE:  extension "pg_trgm" already exists, skipping
+NOTICE:  pg_trgm ok
+NOTICE:  extension "vector" already exists, skipping
+NOTICE:  vector ok
+NOTICE:  pgaudit skipped: component not installed, or PostgreSQL not restarted since installing it
+```
+
+## Scope
+
 Optional PostgreSQL extensions are shipped as
 [snap components](https://snapcraft.io/docs/components): small add-on packages
 that install next to the `postgresql` snap without duplicating PostgreSQL itself.
