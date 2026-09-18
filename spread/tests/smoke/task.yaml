@@ -28,4 +28,5 @@ execute: |
   postgresql.receivewal --help
   postgresql.recvlogical --help
   postgresql.restore --help
+  postgresql.vacuumdb --help
 

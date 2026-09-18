@@ -99,6 +99,6 @@ if ! snapctl start --enable postgresql.postgresql 2>/dev/null; then
   echo "Run: sudo snap start --enable postgresql.postgresql"
 fi
 echo "Upgrade complete. Next steps:"
-echo "  sudo postgresql.psql -U postgres -h /tmp -c 'ANALYZE'   # or vacuumdb --all --analyze-in-stages"
+echo "  sudo postgresql.vacuumdb -U postgres -h /tmp --all --analyze-in-stages --missing-stats-only"
 echo "  sudo snap remove postgresql+pg$OLD                       # old binaries are no longer needed"
 echo "  The PostgreSQL $OLD cluster is kept under $DATA/$OLD until you delete it."

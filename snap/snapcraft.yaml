@@ -198,6 +198,11 @@ apps:
     command: usr/bin/psql
     plugs:
       - network
+  vacuumdb:
+    command: usr/bin/vacuumdb
+    refresh-mode: ignore-running
+    plugs:
+      - network
   upgrade:
     command: upgrade.sh
     plugs:  # pg_createcluster probes for a free port

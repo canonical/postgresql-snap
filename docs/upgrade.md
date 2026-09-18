@@ -10,7 +10,7 @@ that carries the previous major's server binaries, then run
 sudo snap refresh postgresql+pg16 --channel 18/stable   # data untouched, service kept stopped
 sudo postgresql.upgrade --check                         # optional dry run
 sudo postgresql.upgrade                                 # pg_upgrade 16 -> 18, service started
-sudo postgresql.psql -U postgres -h /tmp -c 'ANALYZE'   # or vacuumdb --all --analyze-in-stages
+sudo postgresql.vacuumdb -U postgres -h /tmp --all --analyze-in-stages --missing-stats-only
 sudo snap remove postgresql+pg16                        # old binaries no longer needed
 ```
 
