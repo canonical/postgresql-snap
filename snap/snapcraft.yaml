@@ -26,8 +26,11 @@ system-usernames:
 #   snap install postgresql+pg-cron
 #   snap remove  postgresql+pg-cron
 # Each component is data-only (no PG binary is duplicated): lib/*.so,
-# share/extension/*, a `manifest` and an optional postgresql.conf snippet,
-# all consumed by components-env.sh at daemon start. See docs/extensions.md.
+# share/extension/*, an optional `manifest` (PRELOAD=<lib>) and an optional
+# postgresql.conf snippet (both kept in snap/local/components/<name>/), all
+# consumed by components-env.sh at daemon start. See docs/extensions.md.
+# Versions are hard-coded: craftctl rejects hyphenated variable names such as
+# components.pg-cron.version, so adopt-info can't be used.
 components:
   pg-cron:
     type: standard
@@ -35,10 +38,37 @@ components:
     description: |
       Run periodic jobs in PostgreSQL. Requires a daemon restart after
       install/remove (adds itself to shared_preload_libraries).
-    # Keep in sync with postgresql-18-cron in the Ubuntu archive (printed at
-    # build time). Can't use adopt-info: craftctl rejects hyphenated variable
-    # names such as components.pg-cron.version.
-    version: '1.6.7'
+    version: '1.6.7'  # postgresql-18-cron in the Ubuntu archive
+  pgvector:
+    type: standard
+    summary: pgvector extension for PostgreSQL 18
+    description: |
+      Vector similarity search (CREATE EXTENSION vector). Requires a daemon
+      restart after install/remove.
+    version: '0.8.1'  # postgresql-18-pgvector in the Ubuntu archive
+  pgaudit:
+    type: standard
+    summary: pgaudit extension for PostgreSQL 18
+    description: |
+      Detailed session and object audit logging. Requires a daemon restart
+      after install/remove (adds itself to shared_preload_libraries).
+    version: '18.0'  # postgresql-18-pgaudit in the Ubuntu archive
+  # contrib modules split out of the base snap (same version as the snap)
+  pg-stat-statements:
+    type: standard
+    summary: pg_stat_statements contrib module for PostgreSQL 18
+    description: |
+      Track planning and execution statistics of all SQL statements. Requires
+      a daemon restart after install/remove (adds itself to
+      shared_preload_libraries).
+    version: '18.6'
+  pg-trgm:
+    type: standard
+    summary: pg_trgm contrib module for PostgreSQL 18
+    description: |
+      Trigram-based text similarity and index support. Requires a daemon
+      restart after install/remove.
+    version: '18.6'
 
 plugs:
   shared-memory:
@@ -207,6 +237,16 @@ parts:
       - -usr/lib/*/libicutu.so*
       - -usr/lib/*/liburing-ffi.so*
     organize:
+      # contrib modules shipped as components instead of in the base snap.
+      # Their JIT bitcode stays in $libdir/bitcode (looked up there by the
+      # server, harmless without the module).
+      usr/lib/postgresql/18/lib/pg_stat_statements.so: >-
+        (component/pg-stat-statements)/lib/pg_stat_statements.so
+      usr/share/postgresql/18/extension/pg_stat_statements*: >-
+        (component/pg-stat-statements)/share/extension/
+      usr/lib/postgresql/18/lib/pg_trgm.so: (component/pg-trgm)/lib/pg_trgm.so
+      usr/share/postgresql/18/extension/pg_trgm*: >-
+        (component/pg-trgm)/share/extension/
       etc/postgresql: (default)/default-config/etc/postgresql
       etc/postgresql-common: (default)/default-config/etc/postgresql-common
       var/lib/postgresql: (default)/default-config/var/lib/postgresql
@@ -229,8 +269,14 @@ parts:
       # Copied to $SNAP_COMMON/etc/postgresql-common by the install hook
       createcluster.conf: >-
         (default)/default-config/etc/postgresql-common/createcluster.conf
+      # Static component files (manifest, postgresql.conf)
+      components/pg-cron: (component/pg-cron)
+      components/pgaudit: (component/pgaudit)
+      components/pg-stat-statements: (component/pg-stat-statements)
+    stage:
+      - -components  # emptied by organize above
 
-  # --- component: pg-cron -------------------------------------------------
+  # --- components built from archive extension debs -----------------------
   # Built from the archive deb so the .so matches postgresql-18's ABI/flags.
   # Only the extension payload is routed to the component partition; the deb's
   # dependency closure (postgresql-18 etc.) is deliberately NOT staged, which
@@ -238,29 +284,34 @@ parts:
   pg-cron:
     plugin: nil
     after: [postgres-debs]
-    override-build: |
+    build-environment:
+      - DEB: postgresql-18-cron
+    override-build: &deb-component |
       set -e
-      apt-get download postgresql-18-cron
-      DEB=$(ls postgresql-18-cron_*.deb)
-      echo "postgresql-18-cron version: $(dpkg-deb -f "$DEB" Version)"
-      X="$CRAFT_PART_INSTALL/x"
-      OUT="$CRAFT_PART_INSTALL/pg-cron"
-      dpkg-deb -x "$DEB" "$X"
-      install -Dm644 "$X/usr/lib/postgresql/18/lib/pg_cron.so" \
-        "$OUT/lib/pg_cron.so"
-      install -d "$OUT/share/extension"
-      cp "$X/usr/share/postgresql/18/extension/pg_cron"* "$OUT/share/extension/"
-      install -Dm644 "$X/usr/share/doc/postgresql-18-cron/copyright" \
-        "$OUT/licenses/COPYRIGHT-pg_cron"
-      # Consumed by components-env.sh at daemon start
-      cat > "$OUT/manifest" <<'MF'
-      PRELOAD=pg_cron
-      MF
-      cat > "$OUT/postgresql.conf" <<'CONF'
-      # pg_cron connects back to the server through libpq. Use the local socket
-      # (auth-local=trust in the snap): TCP to localhost requires a password.
-      cron.host = '/tmp'
-      CONF
-      rm -rf "$X"
+      apt-get download "$DEB"
+      echo "$DEB version: $(dpkg-deb -f "$DEB"_*.deb Version)"
+      dpkg-deb -x "$DEB"_*.deb x
+      install -Dm644 -t "$CRAFT_PART_INSTALL/comp/lib" \
+        x/usr/lib/postgresql/18/lib/*.so
+      install -Dm644 -t "$CRAFT_PART_INSTALL/comp/share/extension" \
+        x/usr/share/postgresql/18/extension/*
+      install -Dm644 "x/usr/share/doc/$DEB/copyright" \
+        "$CRAFT_PART_INSTALL/comp/licenses/COPYRIGHT-$DEB"
     organize:
-      pg-cron: (component/pg-cron)
+      comp: (component/pg-cron)
+  pgvector:
+    plugin: nil
+    after: [postgres-debs]
+    build-environment:
+      - DEB: postgresql-18-pgvector
+    override-build: *deb-component
+    organize:
+      comp: (component/pgvector)
+  pgaudit:
+    plugin: nil
+    after: [postgres-debs]
+    build-environment:
+      - DEB: postgresql-18-pgaudit
+    override-build: *deb-component
+    organize:
+      comp: (component/pgaudit)

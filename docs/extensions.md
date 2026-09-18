@@ -9,13 +9,22 @@ match the PostgreSQL version in the snap.
 | Component | Extension | Notes |
 |-----------|-----------|-------|
 | `pg-cron` | [pg_cron](https://github.com/citusdata/pg_cron) | Adds itself to `shared_preload_libraries` |
+| `pgvector` | [pgvector](https://github.com/pgvector/pgvector) (`CREATE EXTENSION vector`) | |
+| `pgaudit` | [pgaudit](https://github.com/pgaudit/pgaudit) | Adds itself to `shared_preload_libraries` |
+| `pg-stat-statements` | [pg_stat_statements](https://www.postgresql.org/docs/current/pgstatstatements.html) | Contrib module, adds itself to `shared_preload_libraries` |
+| `pg-trgm` | [pg_trgm](https://www.postgresql.org/docs/current/pgtrgm.html) | Contrib module |
+
+The contrib modules `pg_stat_statements` and `pg_trgm` are no longer part of the
+base snap. If `postgresql.conf` lists `pg_stat_statements` in
+`shared_preload_libraries`, install the component before refreshing, otherwise
+PostgreSQL will not start.
 
 ## Install
 
 Install PostgreSQL together with an extension:
 
 ```shell
-sudo snap install postgresql+pg-cron
+sudo snap install postgresql+pg-cron+pgvector
 ```
 
 or add an extension to an existing installation, then restart PostgreSQL so it
