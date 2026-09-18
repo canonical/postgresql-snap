@@ -22,9 +22,71 @@ confinement: strict
 system-usernames:
   _daemon_: shared
 
+# Optional extensions shipped as snap components (snapd >= 2.67):
+#   snap install postgresql+pg-cron
+#   snap remove  postgresql+pg-cron
+# Each component is data-only (no PG binary is duplicated): lib/*.so,
+# share/extension/*, an optional `manifest` (PRELOAD=<lib>) and an optional
+# postgresql.conf snippet (both kept in snap/local/components/<name>/), all
+# consumed by components-env.sh at daemon start. See docs/extensions.md.
+# `snap install postgresql` is equivalent to apt's postgresql-18: all contrib
+# modules are in the base snap. Components are what apt also keeps separate
+# (jit) plus third-party extensions.
+# Versions are hard-coded: craftctl rejects hyphenated variable names such as
+# components.pg-cron.version, so adopt-info can't be used.
+components:
+  pg-cron:
+    type: standard
+    summary: pg_cron extension for PostgreSQL 18
+    description: |
+      Run periodic jobs in PostgreSQL. Requires a daemon restart after
+      install/remove (adds itself to shared_preload_libraries).
+    version: '1.6.7'  # postgresql-18-cron in the Ubuntu archive
+  pgvector:
+    type: standard
+    summary: pgvector extension for PostgreSQL 18
+    description: |
+      Vector similarity search (CREATE EXTENSION vector). Requires a daemon
+      restart after install/remove.
+    version: '0.8.1'  # postgresql-18-pgvector in the Ubuntu archive
+  pgaudit:
+    type: standard
+    summary: pgaudit extension for PostgreSQL 18
+    description: |
+      Detailed session and object audit logging. Requires a daemon restart
+      after install/remove (adds itself to shared_preload_libraries).
+    version: '18.0'  # postgresql-18-pgaudit in the Ubuntu archive
+  # Previous major's server binaries for in-place upgrades (pg_upgrade):
+  #   snap refresh postgresql+pg16 --channel 18/stable && postgresql.upgrade
+  pg16:
+    type: standard
+    summary: PostgreSQL 16 binaries for in-place upgrades to 18
+    description: |
+      Server binaries of the previous major (from Ubuntu 24.04's
+      postgresql-16), used only by `postgresql.upgrade` to migrate an
+      existing PostgreSQL 16 cluster to 18 with pg_upgrade. Remove after the
+      upgrade.
+    version: '16.15'  # postgresql-16 in noble-updates, printed at build time
+  # PostgreSQL's LLVM JIT, a separate package in apt too (postgresql-18-jit).
+  # The base works without it (pg_jit_available() = false). Version = snap's.
+  jit:
+    type: standard
+    summary: LLVM JIT compiler for PostgreSQL 18
+    description: |
+      Just-in-time compilation of expressions and tuple deforming (llvmjit,
+      libLLVM). Requires a daemon restart after install/remove.
+    version: '18.6'
+
 plugs:
   shared-memory:
     private: true
+  # Extensions shipped as separate snaps (see extensions/README.md). Each
+  # connected provider appears under $SNAP/extensions/<dir>/ with the same
+  # layout as a component; an installed component of the same name wins.
+  extensions:
+    interface: content
+    content: postgresql-18-extensions
+    target: $SNAP/extensions
 
 # This slot exposes all of this snap to any other snap to use postgresql without
 # bundling any of postgresql. This allows multiple snaps to use the postgresql
@@ -85,6 +147,9 @@ layout:
     bind: $SNAP/usr/share/postgresql
 
 apps:
+  # NOTE: `refresh-mode: ignore-running` on the client apps (so that an open
+  # psql does not block `snap refresh`) is accepted by snapd but rejected by
+  # the store's review tools (check_schema: refresh-mode is daemon-only).
   createdb:
     command: usr/bin/createdb
   createuser:
@@ -136,7 +201,20 @@ apps:
     command: usr/bin/psql
     plugs:
       - network
+  vacuumdb:
+    command: usr/bin/vacuumdb
+    plugs:
+      - network
+  upgrade:
+    command: upgrade.sh
+    plugs:  # pg_createcluster probes for a free port
+      - network
+      - network-bind
   postgresql:
+    # components-env.sh regenerates conf.d/00-snap-components.conf from the
+    # components mounted at $SNAP/../components/$SNAP_REVISION/ on every start.
+    command-chain:
+      - components-env.sh
     command: >-
       ctl-cluster.sh --skip-systemctl-redirect --foreground 18 main start
     daemon: simple
@@ -184,11 +262,16 @@ parts:
       - -usr/lib/*/libicutest.so*
       - -usr/lib/*/libicutu.so*
       - -usr/lib/*/liburing-ffi.so*
+      # The JIT provider and LLVM live in the `jit` component. What the server
+      # looks up under the compiled-in $libdir (llvmjit_types.bc, bitcode/)
+      # stays here: it is only used once llvmjit is loaded.
+      - -usr/lib/postgresql/18/lib/llvmjit.so
+      - -usr/lib/*/libLLVM*
     organize:
-      etc/postgresql: default-config/etc/postgresql
-      etc/postgresql-common: default-config/etc/postgresql-common
-      var/lib/postgresql: default-config/var/lib/postgresql
-      var/log/postgresql: default-config/var/log/postgresql
+      etc/postgresql: (default)/default-config/etc/postgresql
+      etc/postgresql-common: (default)/default-config/etc/postgresql-common
+      var/lib/postgresql: (default)/default-config/var/lib/postgresql
+      var/log/postgresql: (default)/default-config/var/log/postgresql
       usr/share/doc/postgresql/copyright: licenses/COPYRIGHT-postgresql
       usr/share/doc/util-linux/copyright: licenses/COPYRIGHT-util-linux
       usr/share/doc/locales-all/copyright: licenses/COPYRIGHT-locales-all
@@ -203,3 +286,131 @@ parts:
   wrapper:
     plugin: dump
     source: snap/local
+    override-build: |
+      craftctl default
+      install -d "$CRAFT_PART_INSTALL/extensions"  # content plug mount point
+    organize:
+      # Copied to $SNAP_COMMON/etc/postgresql-common by the install hook
+      createcluster.conf: >-
+        (default)/default-config/etc/postgresql-common/createcluster.conf
+      # Static component files (manifest, postgresql.conf)
+      components/jit: (component/jit)
+      components/pg-cron: (component/pg-cron)
+      components/pgaudit: (component/pgaudit)
+    stage:
+      - -components  # emptied by organize above
+
+  # --- components built from archive extension debs -----------------------
+  # Built from the archive deb so the .so matches postgresql-18's ABI/flags.
+  # Only the extension payload is routed to the component partition; the deb's
+  # dependency closure (postgresql-18 etc.) is deliberately NOT staged, which
+  # would otherwise overwrite the sed-patched files from postgres-debs.
+  pg-cron:
+    plugin: nil
+    after: [postgres-debs]
+    build-environment:
+      - DEB: postgresql-18-cron
+    override-build: &deb-component |
+      set -e
+      apt-get download "$DEB"
+      echo "$DEB version: $(dpkg-deb -f "$DEB"_*.deb Version)"
+      dpkg-deb -x "$DEB"_*.deb x
+      install -Dm644 -t "$CRAFT_PART_INSTALL/comp/lib" \
+        x/usr/lib/postgresql/18/lib/*.so
+      install -Dm644 -t "$CRAFT_PART_INSTALL/comp/share/extension" \
+        x/usr/share/postgresql/18/extension/*
+      install -Dm644 "x/usr/share/doc/$DEB/copyright" \
+        "$CRAFT_PART_INSTALL/comp/licenses/COPYRIGHT-$DEB"
+    organize:
+      comp: (component/pg-cron)
+  pgvector:
+    plugin: nil
+    after: [postgres-debs]
+    build-environment:
+      - DEB: postgresql-18-pgvector
+    override-build: *deb-component
+    organize:
+      comp: (component/pgvector)
+  pgaudit:
+    plugin: nil
+    after: [postgres-debs]
+    build-environment:
+      - DEB: postgresql-18-pgaudit
+    override-build: *deb-component
+    organize:
+      comp: (component/pgaudit)
+  # --- component: jit ------------------------------------------------------
+  # llvmjit.so (postgresql-18-jit) + libLLVM (libllvm21). Everything else
+  # they need is in core26 or the base snap. RUNPATH=$ORIGIN lets llvmjit.so
+  # find libLLVM next to it when the server dlopen()s it from the component.
+  jit:
+    plugin: nil
+    after: [postgres-debs]
+    build-packages:
+      - patchelf
+    override-build: |
+      set -e
+      apt-get download postgresql-18-jit libllvm21
+      for deb in *.deb; do
+        echo "$deb version: $(dpkg-deb -f "$deb" Version)"
+        dpkg-deb -x "$deb" x
+      done
+      OUT="$CRAFT_PART_INSTALL/comp"
+      install -Dm644 -t "$OUT/lib" x/usr/lib/postgresql/18/lib/llvmjit.so \
+        x/usr/lib/*/libLLVM.so.*
+      patchelf --set-rpath '$ORIGIN' "$OUT/lib/llvmjit.so"
+      install -Dm644 x/usr/share/doc/postgresql-18-jit/copyright \
+        "$OUT/licenses/COPYRIGHT-postgresql-18-jit"
+      install -Dm644 x/usr/share/doc/libllvm21/copyright \
+        "$OUT/licenses/COPYRIGHT-libllvm21"
+    organize:
+      comp: (component/jit)
+  # --- component: pg16 -----------------------------------------------------
+  # Previous major's server from the Ubuntu 24.04 (noble) archive, plus the
+  # two libraries it needs that neither core26 nor this snap carry any more
+  # (ICU 74, libxml2.so.2). JIT is dropped: it would pull in LLVM 17.
+  # PostgreSQL finds its lib/ and share/ relative to the binary as long as
+  # the usr/lib/postgresql/16 + usr/share/postgresql/16 shape is preserved.
+  pg16:
+    plugin: nil
+    after: [postgres-debs]
+    override-build: |
+      set -e
+      case "$CRAFT_ARCH_BUILD_FOR" in
+        amd64) MIRROR=http://archive.ubuntu.com/ubuntu ;;
+        *)     MIRROR=http://ports.ubuntu.com/ubuntu-ports ;;
+      esac
+      cat > /etc/apt/sources.list.d/noble.sources <<EOS
+      Types: deb
+      URIs: $MIRROR
+      Suites: noble noble-updates noble-security
+      Components: main universe
+      Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+      EOS
+      apt-get update
+      for p in postgresql-16 libicu74 libxml2; do
+        apt-get download "$p/noble-security" 2>/dev/null \
+          || apt-get download "$p/noble-updates" 2>/dev/null \
+          || apt-get download "$p/noble"
+      done
+      rm /etc/apt/sources.list.d/noble.sources
+      for deb in *.deb; do
+        echo "$deb: $(dpkg-deb -f "$deb" Version)"
+        dpkg-deb -x "$deb" x
+      done
+      OUT="$CRAFT_PART_INSTALL/comp"
+      T="$CRAFT_ARCH_TRIPLET_BUILD_FOR"
+      install -d "$OUT/usr/lib/postgresql" "$OUT/usr/share/postgresql" \
+        "$OUT/libs" "$OUT/licenses"
+      cp -a x/usr/lib/postgresql/16 "$OUT/usr/lib/postgresql/"
+      cp -a x/usr/share/postgresql/16 "$OUT/usr/share/postgresql/"
+      rm -rf "$OUT/usr/lib/postgresql/16/lib/llvmjit.so" \
+        "$OUT/usr/lib/postgresql/16/lib/bitcode"
+      cp -a "x/usr/lib/$T/libicudata.so.74"* "x/usr/lib/$T/libicuuc.so.74"* \
+        "x/usr/lib/$T/libicui18n.so.74"* "x/usr/lib/$T/libxml2.so.2"* \
+        "$OUT/libs/"
+      for p in postgresql-16 libicu74 libxml2; do
+        cp "x/usr/share/doc/$p/copyright" "$OUT/licenses/COPYRIGHT-$p"
+      done
+    organize:
+      comp: (component/pg16)

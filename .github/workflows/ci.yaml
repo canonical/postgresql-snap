@@ -50,7 +50,7 @@ jobs:
 
   test:
     name: Test snap | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
-    timeout-minutes: 10
+    timeout-minutes: 15
     # runs-on: [self-hosted, linux, "${{ matrix.platform.host_arch }}", "${{ matrix.base.codename }}", large]
     runs-on: "ubuntu-${{ matrix.base.version }}${{ matrix.platform.gh_suffix }}"
     strategy:
