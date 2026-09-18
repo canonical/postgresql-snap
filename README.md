@@ -22,6 +22,9 @@ shipped as snap components, see [`docs/extensions.md`](/docs/extensions.md):
 sudo snap install postgresql+pg-cron
 ```
 
+Extensions can also come from separate snaps connected to the `extensions`
+content plug, see [`extensions/`](/extensions/).
+
 ## Build the snap
 
 Clone the repository:

@@ -151,11 +151,37 @@ sudo snap remove postgresql+pg-cron
 sudo snap restart postgresql.postgresql
 ```
 
+## Extension snaps (content interface)
+
+An extension can also be shipped as a *separate* snap that exposes the same
+directory layout through the content interface, for example by a third party.
+Connect it to the `extensions` plug and restart PostgreSQL:
+
+```shell
+sudo snap install postgresql-pg-cron
+sudo snap connect postgresql:extensions postgresql-pg-cron:extensions
+sudo snap restart postgresql.postgresql
+```
+
+Snaps from the same publisher connect automatically. If a component and an
+extension snap provide the same extension, the component is used and the
+extension snap is ignored. Use `SHOW snap.<name>` to see where an extension
+comes from (`component 1.6.7` or `extension snap 1.5.2`). An example provider
+lives in [`extensions/postgresql-pg-cron`](/extensions/postgresql-pg-cron).
+
+Unlike components, snapd does not restart PostgreSQL when an extension snap is
+refreshed: restart it yourself afterwards.
+
+Switching an extension between sources (or refreshing one) does not change the
+extension objects already created in databases. Run
+`ALTER EXTENSION <name> UPDATE` in each database to move them to the new
+version, for example from pg_cron 1.5 to 1.6.
+
 ## How it works
 
 On every start of the `postgresql` service the snap regenerates
 `/var/snap/postgresql/common/etc/postgresql/18/main/conf.d/00-snap-components.conf`
-from the installed components. It extends `dynamic_library_path`,
+from the installed components and connected extension snaps. It extends `dynamic_library_path`,
 `extension_control_path` and `shared_preload_libraries` with the component
 contents and appends any settings the component ships (for example
 `cron.host = '/tmp'`, so that pg_cron connects through the local socket).

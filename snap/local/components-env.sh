@@ -1,14 +1,20 @@
 #!/bin/bash
 # command-chain entry for the postgresql daemon.
 #
-# Snap components (e.g. `snap install postgresql+pg-cron`) are mounted read-only
-# under $SNAP/../components/$SNAP_REVISION/<name>/ and ship:
+# Extensions can be added to the snap in two ways, both using the same layout:
 #   lib/*.so           -> appended to dynamic_library_path
 #   share/extension/*  -> parent dir appended to extension_control_path (PG >= 18)
 #   manifest           -> optional `PRELOAD=<lib>` appended to shared_preload_libraries
+#                         and `VERSION=<ver>` (reported in snap.<name>)
 #   postgresql.conf    -> optional GUCs copied verbatim (extension settings)
+# 1. snap components (`snap install postgresql+pg-cron`), mounted read-only
+#    under $SNAP/../components/$SNAP_REVISION/<name>/
+# 2. extension snaps connected to the `extensions` content plug, appearing
+#    under $SNAP/extensions/<dir>/
+# Components take precedence: an extension snap whose directory name matches
+# an installed component is ignored, and component paths come first.
 # On every daemon start this regenerates <include_dir>/00-snap-components.conf
-# in the cluster config so that adding/removing a component and restarting
+# in the cluster config so that adding/removing an extension and restarting
 # PostgreSQL is all that is needed. Failures here never block the daemon.
 #
 # The cluster config is owned by _daemon_ and root inside the snap has no
@@ -18,7 +24,7 @@ set -u
 if [ "${1:-}" != "--as-daemon" ]; then
   if [ "$(id -u)" = "0" ]; then
     if ! "$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- "$0" --as-daemon; then
-      echo "WARNING: components-env.sh: could not configure snap components, starting without them" >&2
+      echo "WARNING: components-env.sh: could not configure snap extensions, starting without them" >&2
     fi
   fi
   exec "$@"
@@ -32,6 +38,7 @@ PG_MAJOR="${SNAP_VERSION%%.*}"
 CONF_DIR="$SNAP_COMMON/etc/postgresql/$PG_MAJOR/main"
 PG_CONF="$CONF_DIR/postgresql.conf"
 COMP_ROOT="$(dirname "$SNAP")/components/$SNAP_REVISION"
+PLUG_ROOT="$SNAP/extensions"
 
 if [ ! -f "$PG_CONF" ]; then
   echo "components-env.sh: $PG_CONF not found, skipping" >&2
@@ -59,35 +66,76 @@ out="$conf_d/00-snap-components.conf"
 libpath="$(conf_get dynamic_library_path)";    libpath="${libpath:-\$libdir}"
 ctlpath="$(conf_get extension_control_path)";  ctlpath="${ctlpath:-\$system}"
 preload="$(conf_get shared_preload_libraries)"
-extra=""
+extra_comp=""   # postgresql.conf snippets from components (written last: win)
+extra_plug=""   # postgresql.conf snippets from extension snaps
+report=""       # snap.<name> = '<origin> <version>' lines
+comps=" "       # names of installed components, for precedence
 
-for comp in "$COMP_ROOT"/*/; do
-  [ -d "$comp" ] || continue
-  comp="${comp%/}"
-  [ -d "$comp/lib" ]             && libpath="$libpath:$comp/lib"
-  [ -d "$comp/share/extension" ] && ctlpath="$ctlpath:$comp/share"  # PG appends /extension
-  if [ -f "$comp/manifest" ]; then
-    lib="$(sed -n 's/^PRELOAD=//p' "$comp/manifest" | tail -1)"
-    case ",$preload," in
-      *",$lib,"*) ;;  # already listed by the administrator
-      *) [ -n "$lib" ] && preload="${preload:+$preload,}$lib" ;;
+# add_ext <dir> <origin>: register one extension directory.
+add_ext() {
+  local dir="$1" origin="$2" name lib ver snippet
+  name="$(basename "$dir")"
+  [ -d "$dir/lib" ]             && libpath="$libpath:$dir/lib"
+  [ -d "$dir/share/extension" ] && ctlpath="$ctlpath:$dir/share"  # PG appends /extension
+  lib=""; ver=""
+  if [ -f "$dir/manifest" ]; then
+    lib="$(sed -n 's/^PRELOAD=//p' "$dir/manifest" | tail -1)"
+    ver="$(sed -n 's/^VERSION=//p' "$dir/manifest" | tail -1)"
+  fi
+  [ -z "$ver" ] && [ -f "$dir/meta/component.yaml" ] && \
+    ver="$(sed -n 's/^version:[[:space:]]*//p' "$dir/meta/component.yaml" | tail -1)"
+  # A malformed line in conf.d stops the server: only keep safe characters
+  # (snapcraft quotes float-looking versions as '18.6').
+  ver="$(printf '%s' "$ver" | tr -cd 'A-Za-z0-9.+~:-')"
+  case ",$preload," in
+    *",$lib,"*) ;;  # already listed by the administrator or another extension
+    *) [ -n "$lib" ] && preload="${preload:+$preload,}$lib" ;;
+  esac
+  if [ -f "$dir/postgresql.conf" ]; then
+    snippet="
+# --- $name ($origin) ---
+$(cat "$dir/postgresql.conf")"
+    case "$origin" in
+      component) extra_comp="$extra_comp$snippet" ;;
+      *)         extra_plug="$extra_plug$snippet" ;;
     esac
   fi
-  if [ -f "$comp/postgresql.conf" ]; then
-    extra="$extra
-# --- $(basename "$comp") ---
-$(cat "$comp/postgresql.conf")"
-  fi
+  report="$report
+snap.${name//-/_} = '$origin ${ver:-unknown}'"
+}
+
+for dir in "$COMP_ROOT"/*/; do
+  [ -d "$dir" ] || continue
+  dir="${dir%/}"
+  comps="$comps$(basename "$dir") "
+  add_ext "$dir" component
+done
+
+for dir in "$PLUG_ROOT"/*/; do
+  [ -d "$dir" ] || continue
+  dir="${dir%/}"
+  case "$comps" in
+    *" $(basename "$dir") "*)
+      report="$report
+# extension snap $(basename "$dir") ignored: component of the same name is installed"
+      continue ;;
+  esac
+  add_ext "$dir" "extension snap"
 done
 
 mkdir -p "$conf_d"
 {
   echo "# Generated by the postgresql snap at $(date -u +%FT%TZ) from the installed"
-  echo "# snap components; regenerated on every daemon start. Do not edit."
+  echo "# snap components and connected extension snaps; regenerated on every"
+  echo "# daemon start. Do not edit."
   echo "dynamic_library_path = '$libpath'"
   echo "extension_control_path = '$ctlpath'"
   [ -n "$preload" ] && echo "shared_preload_libraries = '$preload'"
-  [ -n "$extra" ] && echo "$extra"
-  true
+  [ -n "$extra_plug" ] && echo "$extra_plug"
+  [ -n "$extra_comp" ] && echo "$extra_comp"
+  if [ -n "$report" ]; then
+    echo
+    echo "# Where each extension comes from (SHOW snap.<name>):$report"
+  fi
 } > "$out.tmp"
 mv -f "$out.tmp" "$out"

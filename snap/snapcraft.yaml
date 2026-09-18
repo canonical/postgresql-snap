@@ -73,6 +73,13 @@ components:
 plugs:
   shared-memory:
     private: true
+  # Extensions shipped as separate snaps (see extensions/README.md). Each
+  # connected provider appears under $SNAP/extensions/<dir>/ with the same
+  # layout as a component; an installed component of the same name wins.
+  extensions:
+    interface: content
+    content: postgresql-18-extensions
+    target: $SNAP/extensions
 
 # This slot exposes all of this snap to any other snap to use postgresql without
 # bundling any of postgresql. This allows multiple snaps to use the postgresql
@@ -265,6 +272,9 @@ parts:
   wrapper:
     plugin: dump
     source: snap/local
+    override-build: |
+      craftctl default
+      install -d "$CRAFT_PART_INSTALL/extensions"  # content plug mount point
     organize:
       # Copied to $SNAP_COMMON/etc/postgresql-common by the install hook
       createcluster.conf: >-

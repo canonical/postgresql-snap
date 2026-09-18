@@ -1,0 +1,77 @@
+summary: pg_cron as a separate extension snap (content interface) vs the component
+
+execute: |
+  echo "Locating the extension snap and the component built next to the snap..."
+  EXT="$(ls "${PROJECT_PATH}"/extensions/postgresql-pg-cron/postgresql-pg-cron_*.snap 2>/dev/null | head -1)"
+  COMP="$(ls "${PROJECT_PATH}"/postgresql+pg-cron_*.comp 2>/dev/null | head -1)"
+  if [ -z "$EXT" ] || [ -z "$COMP" ]; then
+    echo "ERROR: need extensions/postgresql-pg-cron/*.snap (snapcraft pack there) and postgresql+pg-cron_*.comp" >&2
+    exit 1
+  fi
+  REV="$(snap list postgresql | awk 'NR == 2 {print $3}')"
+  CONF=/var/snap/postgresql/common/etc/postgresql/18/main/conf.d/00-snap-components.conf
+  PSQL="postgresql.psql -U postgres -h /tmp -Atq"
+  restart() {
+    snap restart postgresql.postgresql
+    timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  }
+
+  echo "Installing and connecting the extension snap (no auto-connect for --dangerous)..."
+  snap install "$EXT" --dangerous
+  snap connect postgresql:extensions postgresql-pg-cron:extensions
+  snap connections postgresql | grep -E "postgresql:extensions\s+postgresql-pg-cron:extensions"
+  # content mounts exist only inside the snap's mount namespace
+  snap run --shell postgresql.psql -c 'test -f "$SNAP/extensions/pg-cron/lib/pg_cron.so"'
+  restart
+  cat "$CONF"
+  grep -F "/snap/postgresql/$REV/extensions/pg-cron/lib" "$CONF"
+  grep -E "^shared_preload_libraries = 'pg_cron'" "$CONF"
+  $PSQL -c "SHOW snap.pg_cron;" | grep -x "extension snap 1.5.2"
+  $PSQL -c "SELECT default_version FROM pg_available_extensions WHERE name = 'pg_cron';" | grep -x 1.5
+  $PSQL -c "CREATE EXTENSION pg_cron;"
+  $PSQL -c "SELECT extversion FROM pg_extension WHERE extname = 'pg_cron';" | grep -x 1.5
+  $PSQL -c "CREATE TABLE cron_test (ts timestamptz DEFAULT now());"
+  $PSQL -c "SELECT cron.schedule('spread', '* * * * *', 'INSERT INTO cron_test DEFAULT VALUES');" | grep -x 1
+  echo "Waiting for the job to run (pg_cron fires at most once a minute)..."
+  timeout 150 /bin/bash -c "while [ \"\$($PSQL -c 'SELECT count(*) FROM cron_test;')\" = 0 ]; do sleep 5; done"
+
+  echo "Installing the component as well: it takes precedence over the extension snap..."
+  snap install "$COMP" --dangerous
+  restart
+  cat "$CONF"
+  grep -F "/snap/postgresql/components/$REV/pg-cron/lib" "$CONF"
+  ! grep -F "/extensions/pg-cron/" "$CONF"
+  grep -F "# extension snap pg-cron ignored: component of the same name is installed" "$CONF"
+  $PSQL -c "SHOW snap.pg_cron;" | grep -x "component 1.6.7"
+  $PSQL -c "SELECT default_version FROM pg_available_extensions WHERE name = 'pg_cron';" | grep -x 1.6
+  $PSQL -c "SELECT jobname FROM cron.job;" | grep -x spread
+  echo "The extension object keeps its version until ALTER EXTENSION ... UPDATE..."
+  $PSQL -c "SELECT extversion FROM pg_extension WHERE extname = 'pg_cron';" | grep -x 1.5
+  $PSQL -c "ALTER EXTENSION pg_cron UPDATE;"
+  $PSQL -c "SELECT extversion FROM pg_extension WHERE extname = 'pg_cron';" | grep -x 1.6
+
+  echo "Removing the component: back to the extension snap..."
+  snap remove postgresql+pg-cron
+  restart
+  $PSQL -c "SHOW snap.pg_cron;" | grep -x "extension snap 1.5.2"
+  $PSQL -c "SELECT jobname FROM cron.job;" | grep -x spread
+
+  echo "Disconnecting the extension snap: pg_cron is gone after restart..."
+  $PSQL -c "SELECT cron.unschedule('spread');" | grep -x t
+  $PSQL -c "DROP EXTENSION pg_cron;"
+  snap disconnect postgresql:extensions postgresql-pg-cron:extensions
+  snap run --shell postgresql.psql -c 'test ! -e "$SNAP/extensions/pg-cron"'
+  restart
+  ! grep -q pg_cron "$CONF"
+  test -z "$($PSQL -c "SELECT name FROM pg_available_extensions WHERE name = 'pg_cron';")"
+
+  echo "Ensure no AppArmor denials from the daemon..."
+  if journalctl -k | grep 'apparmor="DENIED"' | grep 'profile="snap.postgresql.postgresql"'; then
+    echo "ERROR: AppArmor denials produced by the postgresql daemon (see above)" >&2
+    exit 1
+  fi
+
+  echo "Extension snap test completed."
+
+restore: |
+  snap remove postgresql-pg-cron 2>/dev/null || true
