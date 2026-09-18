@@ -147,83 +147,66 @@ layout:
     bind: $SNAP/usr/share/postgresql
 
 apps:
-  # Client apps never block a refresh (refresh-app-awareness): an open psql
-  # would otherwise refuse `snap refresh`, and its connection drops with the
-  # service restart anyway.
+  # NOTE: `refresh-mode: ignore-running` on the client apps (so that an open
+  # psql does not block `snap refresh`) is accepted by snapd but rejected by
+  # the store's review tools (check_schema: refresh-mode is daemon-only).
   createdb:
     command: usr/bin/createdb
-    refresh-mode: ignore-running
   createuser:
     command: usr/bin/createuser
-    refresh-mode: ignore-running
   archivecleanup:
     command: archivecleanup.sh
-    refresh-mode: ignore-running
   isready:
     command: usr/bin/pg_isready
-    refresh-mode: ignore-running
     plugs:
       - network
   restore:
     command: usr/bin/pg_restore
-    refresh-mode: ignore-running
     plugs:
       - network
   config:
     command: usr/bin/pg_config
-    refresh-mode: ignore-running
   dump:
     command: usr/bin/pg_dump
-    refresh-mode: ignore-running
     plugs:
       - network
   recvlogical:
     command: usr/bin/pg_recvlogical
-    refresh-mode: ignore-running
     plugs:
       - network
   basebackup:
     command: usr/bin/pg_basebackup
-    refresh-mode: ignore-running
     plugs:
       - network
   conftool:
     command: conftool.sh
-    refresh-mode: ignore-running
   ctl:
     command: ctl.sh
-    refresh-mode: ignore-running
     plugs:
       - network
       - network-bind
   dumpall:
     command: usr/bin/pg_dumpall
-    refresh-mode: ignore-running
     plugs:
       - network
   receivewal:
     command: usr/bin/pg_receivewal
-    refresh-mode: ignore-running
     plugs:
       - network
   pgbench:
     command: usr/bin/pgbench
-    refresh-mode: ignore-running
     plugs:
       - network
   psql:
     command: usr/bin/psql
-    refresh-mode: ignore-running
     plugs:
       - network
   vacuumdb:
     command: usr/bin/vacuumdb
-    refresh-mode: ignore-running
     plugs:
       - network
   upgrade:
     command: upgrade.sh
-    refresh-mode: ignore-running
     plugs:  # pg_createcluster probes for a free port
       - network
       - network-bind

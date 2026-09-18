@@ -35,16 +35,18 @@ execute: |
   postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test1"
   postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test2"
 
-  echo "Refresh again while a psql session is open: client apps must not block it..."
-  # refresh-mode: ignore-running is read from the *installed* revision, so
-  # this only holds once a revision carrying it is installed (the PR snap).
+  echo "A refresh is refused while a client app (psql) is running (refresh-app-awareness)..."
   postgresql.psql -U postgres -h /tmp -c "SELECT pg_sleep(300);" > /dev/null 2>&1 &
   PSQL_PID=$!
   sleep 3
   kill -0 "$PSQL_PID"
-  snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
+  if snap install "$CRAFT_ARTIFACT" --dangerous --jailmode > /tmp/refresh2.log 2>&1; then
+    kill "$PSQL_PID" 2>/dev/null || true
+    echo "ERROR: refresh with an open psql session was expected to be refused" >&2
+    exit 1
+  fi
+  grep "has running apps (psql)" /tmp/refresh2.log
   kill "$PSQL_PID" 2>/dev/null || true
-  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
   postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test2"
 
   echo "Test refresh completed."
