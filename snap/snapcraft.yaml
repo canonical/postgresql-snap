@@ -149,7 +149,6 @@ parts:
     plugin: nil
     stage-packages:
       - postgresql-18
-      - postgresql-18-jit
       - util-linux
       - locales-all
     override-stage: |
