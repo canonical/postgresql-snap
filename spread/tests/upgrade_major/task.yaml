@@ -1,0 +1,57 @@
+summary: In-place major upgrade 16 -> 18 with the postgresql+pg16 component
+
+execute: |
+  echo "Locating the pg16 component built next to the snap..."
+  COMP="$(ls "${PROJECT_PATH}"/postgresql+pg16_*.comp 2>/dev/null | head -1)"
+  if [ -z "$COMP" ]; then
+    echo "ERROR: postgresql+pg16_*.comp not found in ${PROJECT_PATH} (snapcraft pack builds it next to the .snap)" >&2
+    exit 1
+  fi
+  SNAP_VERSION=$(awk -F\' '/^version:/{print $2}' "${PROJECT_PATH}"/snap/snapcraft.yaml)
+  SNAP_MAJOR="${SNAP_VERSION%%.*}"
+  PSQL="postgresql.psql -U postgres -h /tmp -Atq"
+
+  echo "Replace the snap under test with 16/stable from the store..."
+  snap remove postgresql --purge --terminate
+  snap install postgresql --channel=16/stable --jailmode
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  $PSQL -c "SELECT version();" | grep "^PostgreSQL 16"
+
+  echo "Create test data on PostgreSQL 16..."
+  $PSQL -c "CREATE TABLE test_upgrade (id SERIAL PRIMARY KEY, name TEXT); INSERT INTO test_upgrade (name) VALUES ('before');"
+  $PSQL -c "CREATE EXTENSION pg_trgm; CREATE INDEX ON test_upgrade USING gin (name gin_trgm_ops);"
+  $PSQL -c "ALTER USER postgres WITH PASSWORD 'pgpass';"
+
+  echo "Refresh to the snap under test together with the pg16 component: allowed, service kept down..."
+  snap install "$CRAFT_ARTIFACT" "$COMP" --dangerous --jailmode > /tmp/refresh.log 2>&1
+  cat /tmp/refresh.log
+  snap components postgresql | grep -E "postgresql\+pg16\s+installed\s+standard"
+  snap services postgresql | grep -E "postgresql.postgresql\s+disabled\s+inactive"
+  test -d /var/snap/postgresql/common/var/lib/postgresql/16/main
+  test ! -d "/var/snap/postgresql/common/var/lib/postgresql/${SNAP_MAJOR}"
+  postgresql.upgrade --help
+
+  echo "Dry run, then the real upgrade..."
+  postgresql.upgrade --check
+  test ! -d "/var/snap/postgresql/common/var/lib/postgresql/${SNAP_MAJOR}/main/base" || true
+  postgresql.upgrade
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  snap services postgresql | grep -E "postgresql.postgresql\s+enabled\s+active"
+
+  echo "Data, extension and password survived; the cluster is PostgreSQL ${SNAP_MAJOR}..."
+  $PSQL -c "SELECT version();" | grep "^PostgreSQL ${SNAP_VERSION}"
+  $PSQL -c "SELECT name FROM test_upgrade;" | grep -x before
+  $PSQL -c "INSERT INTO test_upgrade (name) VALUES ('after');"
+  $PSQL -c "SELECT count(*) FROM test_upgrade;" | grep -x 2
+  $PSQL -c "SELECT similarity('after', 'after');" | grep -x 1
+  PGPASSWORD=pgpass postgresql.psql -U postgres -h 127.0.0.1 -Atc "SELECT 1;" | grep -x 1
+  $PSQL -c "SHOW snap.pg16;" | grep -x "component 16.15"
+  test -d /var/snap/postgresql/common/var/lib/postgresql/16/main
+
+  echo "The old binaries can go; a refresh of the new major is a plain refresh again..."
+  snap remove postgresql+pg16
+  snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
+  timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  $PSQL -c "SELECT count(*) FROM test_upgrade;" | grep -x 2
+
+  echo "Major upgrade test completed."
