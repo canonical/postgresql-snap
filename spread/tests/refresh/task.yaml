@@ -35,4 +35,18 @@ execute: |
   postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test1"
   postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test2"
 
+  echo "A refresh is refused while a client app (psql) is running (refresh-app-awareness)..."
+  postgresql.psql -U postgres -h /tmp -c "SELECT pg_sleep(300);" > /dev/null 2>&1 &
+  PSQL_PID=$!
+  sleep 3
+  kill -0 "$PSQL_PID"
+  if snap install "$CRAFT_ARTIFACT" --dangerous --jailmode > /tmp/refresh2.log 2>&1; then
+    kill "$PSQL_PID" 2>/dev/null || true
+    echo "ERROR: refresh with an open psql session was expected to be refused" >&2
+    exit 1
+  fi
+  grep "has running apps (psql)" /tmp/refresh2.log
+  kill "$PSQL_PID" 2>/dev/null || true
+  postgresql.psql -U postgres -h /tmp -c "SELECT * FROM refresh;" | grep "test2"
+
   echo "Test refresh completed."

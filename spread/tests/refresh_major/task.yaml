@@ -2,7 +2,7 @@ summary: PostgreSQL major version refresh protection tests
 
 execute: |
   echo "Testing refresh from 16/stable to a different major version is blocked..."
-  SNAP_VERSION=$(awk -F\' '/version/{print $2}' "${PROJECT_PATH}"/snap/snapcraft.yaml)
+  SNAP_VERSION=$(awk -F\' '/^version:/{print $2}' "${PROJECT_PATH}"/snap/snapcraft.yaml)
   SNAP_MAJOR="${SNAP_VERSION%%.*}"
 
   echo "Replace the snap under test with 16/stable from the store..."
@@ -26,6 +26,7 @@ execute: |
   cat /tmp/refresh.log
   grep "Run post-refresh hook" /tmp/refresh.log
   grep "Data is from PostgreSQL 16 but this revision provides ${SNAP_MAJOR}" /tmp/refresh.log
+  grep "postgresql+pg16" /tmp/refresh.log
 
   echo "Ensure snapd rolled back to 16/stable and the data is intact..."
   snap list postgresql | grep "16/stable"
