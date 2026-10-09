@@ -1,0 +1,68 @@
+# PostgreSQL snap {{ release.version }}
+
+The [PostgreSQL snap](https://snapcraft.io/postgresql) {{ release.version }} was released to `{{ channel }}` on
+{{ date }}. Built on `{{ base }}` ({{ ubuntu }}), it {% if previous %}updates PostgreSQL from {{ previous.version }} to {{ release.version }}{% else %}is the first stable release in the {{ release.track }} track{% endif %}.
+See the upstream [PostgreSQL {{ release.version }} release notes](https://www.postgresql.org/docs/release/{{ release.version }}/).
+
+<!-- TODO: Describe the highlights of this release in a paragraph or two, based on the sections below. -->
+
+[Snap Store](https://snapcraft.io/postgresql) |
+[Commands reference](https://github.com/{{ repo }}/blob/{{ release.track }}/edge/docs/commands.md) |
+[Report issues](https://github.com/{{ repo }}/issues/new/choose) |
+[PostgreSQL project](https://www.postgresql.org/)
+
+{% for title, items in sections.items() %}
+## {{ title }}
+
+{% for item in items %}
+* {{ item.title }} ([{{ item.ref }}]({{ item.url }}))
+{% else %}
+<!-- No labelled changes. Move items here from other sections, or remove this section. -->
+{% endfor %}
+
+{% endfor %}
+{% if compare_url %}
+## Changelog
+
+See the
+[complete list of changes]({{ compare_url }})
+in this release.
+
+{% endif %}
+## Revisions
+
+{% if package %}
+All revisions ship PostgreSQL {{ release.version }} from the Ubuntu package
+[`{{ package.name }}` {{ package.version }}]({{ package.url }}):
+{% else %}
+<!-- TODO: Ubuntu package of PostgreSQL {{ release.version }} not found on Launchpad. -->
+All revisions ship PostgreSQL {{ release.version }}:
+{% endif %}
+
+{% for arch, revision in release.revisions | dictsort %}
+* `{{ arch }}`: [revision {{ revision }}](https://github.com/{{ repo }}/releases/tag/rev{{ revision }})
+{% endfor %}
+
+## Downloads
+
+Install the latest revision of the `{{ channel }}` channel from the
+[Snap Store](https://snapcraft.io/postgresql):
+
+```shell
+sudo snap install postgresql --channel={{ channel }}
+```
+
+To install a particular revision of the {{ release.track }} track:
+
+```shell
+sudo snap install postgresql --channel={{ channel }} --revision=<revision>
+```
+
+To update an existing installation of the {{ release.track }} track to a particular revision:
+
+```shell
+sudo snap refresh postgresql --channel={{ channel }} --revision=<revision>
+```
+
+The source code of this release is available on
+[GitHub](https://github.com/{{ repo }}/).
