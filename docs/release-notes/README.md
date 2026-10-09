@@ -48,3 +48,6 @@ The generator uses the GitHub API with a token from `GITHUB_TOKEN` or
 * Write the highlights in the intro, replacing the `TODO` comment.
 * Move items between sections, reword or drop noise (for example, dependency
   bumps), and remove empty sections.
+
+For a first pass with an AI agent, attach [`review-prompt.md`](review-prompt.md)
+and the draft to the chat, then check the agent's edits and report.
