@@ -1,16 +1,8 @@
 # PostgreSQL snap {{ release.version }}
 
-The [PostgreSQL snap](https://snapcraft.io/postgresql) {{ release.version }} was released to the `{{ channel }}`
-channel on {{ date }}.
-It is built on the `{{ base }}` base ({{ ubuntu }}) and ships PostgreSQL {{ release.version }}.
-
-{% if previous %}
-This release updates PostgreSQL from {{ previous.version }} to {{ release.version }}.
-{% else %}
-This is the first stable release in the {{ release.track }} track.
-{% endif %}
-For changes in PostgreSQL itself, see the upstream
-[PostgreSQL {{ release.version }} release notes](https://www.postgresql.org/docs/release/{{ release.version }}/).
+The [PostgreSQL snap](https://snapcraft.io/postgresql) {{ release.version }} was released to `{{ channel }}` on
+{{ date }}. Built on `{{ base }}` ({{ ubuntu }}), it {% if previous %}updates PostgreSQL from {{ previous.version }} to {{ release.version }}{% else %}is the first stable release in the {{ release.track }} track{% endif %}.
+See the upstream [PostgreSQL {{ release.version }} release notes](https://www.postgresql.org/docs/release/{{ release.version }}/).
 
 <!-- TODO: Describe the highlights of this release in a paragraph or two, based on the sections below. -->
 
