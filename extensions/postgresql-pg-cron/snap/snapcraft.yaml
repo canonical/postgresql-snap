@@ -1,0 +1,74 @@
+name: postgresql-pg-cron
+base: core26
+version: '1.5.2'
+summary: pg_cron extension for the PostgreSQL 18 snap (extension snap)
+description: |
+  Example of shipping a PostgreSQL extension as a separate snap that plugs
+  into the postgresql snap through the content interface:
+
+    sudo snap install postgresql-pg-cron
+    sudo snap connect postgresql:extensions postgresql-pg-cron:extensions
+    sudo snap restart postgresql.postgresql
+
+  If the postgresql+pg-cron component is installed as well, the component
+  takes precedence and this snap is ignored. Ships pg_cron 1.5.2 (extension
+  version 1.5) on purpose, so it is distinguishable from the component's 1.6.
+grade: devel
+confinement: strict
+
+# pg_cron.so is loaded by the postgresql snap, which provides libpq & co.
+lint:
+  ignore:
+    - library
+
+platforms:
+  amd64:
+  arm64:
+
+# Consumed by the postgresql snap's `extensions` plug. The content label
+# carries the PostgreSQL major version: a provider built for another major
+# can never be connected.
+slots:
+  extensions:
+    interface: content
+    content: postgresql-18-extensions
+    source:
+      read:
+        - $SNAP/pg-cron
+
+parts:
+  pg-cron:
+    plugin: nil
+    source: https://github.com/citusdata/pg_cron.git
+    source-tag: v1.5.2
+    source-depth: 1
+    build-packages:
+      - build-essential
+      - postgresql-server-dev-18
+    override-build: |
+      set -e
+      # v1.5.2 predates PostgreSQL 16-18 support; it is deliberately old so
+      # that its extension version (1.5) differs visibly from the component's
+      # (1.6). Minimal patches for the PG 17/18 API:
+      grep -n Werror Makefile || true
+      sed -i 's/-Werror\b//g' Makefile
+      sed -i 's/MemoryContextResetAndDeleteChildren/MemoryContextReset/' \
+        src/job_metadata.c
+      OLD='isTopLevel, true, receiver, receiver, &qc)'
+      NEW='isTopLevel, receiver, receiver, \&qc)'
+      sed -i "s/$OLD/$NEW/" src/pg_cron.c
+      grep -n "isTopLevel, receiver, receiver, &qc" src/pg_cron.c
+      make -j"$(nproc)" with_llvm=no \
+        PG_CONFIG=/usr/lib/postgresql/18/bin/pg_config
+      # Same layout as a postgresql snap component, see docs/extensions.md
+      OUT="$CRAFT_PART_INSTALL/pg-cron"
+      install -Dm644 -t "$OUT/lib" pg_cron.so
+      install -Dm644 -t "$OUT/share/extension" pg_cron.control pg_cron--*.sql
+      install -Dm644 LICENSE "$OUT/licenses/LICENSE-pg_cron"
+      printf 'PRELOAD=pg_cron\nVERSION=%s\n' "$CRAFT_PROJECT_VERSION" \
+        > "$OUT/manifest"
+      cat > "$OUT/postgresql.conf" <<'CONF'
+      # pg_cron connects back to the server through libpq. Use the local socket
+      # (auth-local=trust in the snap): TCP to localhost requires a password.
+      cron.host = '/tmp'
+      CONF

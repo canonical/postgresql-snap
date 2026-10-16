@@ -27,6 +27,7 @@ postgres=# \du+
 * [postgresql.createuser](https://www.postgresql.org/docs/current/app-createuser.html) - define a new PostgreSQL user account
 * [postgresql.createdb](https://www.postgresql.org/docs/current/app-createdb.html) - create a new PostgreSQL database
 * [postgresql.ctl](https://www.postgresql.org/docs/current/app-pg-ctl.html) - initialize, start, stop, or control a PostgreSQL server
+* [postgresql.vacuumdb](https://www.postgresql.org/docs/current/app-vacuumdb.html) - garbage-collect and analyze databases, e.g. after a [major upgrade](upgrade.md): `postgresql.vacuumdb -U postgres -h /tmp --all --analyze-in-stages --missing-stats-only`
 
 <details><summary>Example for <code>postgresql.createuser</code></summary>
 

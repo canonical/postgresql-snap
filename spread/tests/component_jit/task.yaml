@@ -1,0 +1,50 @@
+summary: LLVM JIT as a snap component (postgresql+jit)
+
+execute: |
+  echo "Locating the jit component built next to the snap..."
+  COMP="$(ls "${PROJECT_PATH}"/postgresql+jit_*.comp 2>/dev/null | head -1)"
+  if [ -z "$COMP" ]; then
+    echo "ERROR: postgresql+jit_*.comp not found in ${PROJECT_PATH} (snapcraft pack builds it next to the .snap)" >&2
+    exit 1
+  fi
+  PSQL="postgresql.psql -U postgres -h /tmp -Atq"
+  # Cheap query forced through the JIT: the plan then carries a "JIT:" block
+  # (only printed with COSTS on).
+  JITQ="SET jit_above_cost = 0; SET jit_inline_above_cost = 0; SET jit_optimize_above_cost = 0;
+        EXPLAIN (ANALYZE, TIMING OFF, SUMMARY OFF) SELECT sum(i) FROM generate_series(1, 1000) AS i;"
+  restart() {
+    snap restart postgresql.postgresql
+    timeout 60 /bin/bash -c "while ! postgresql.isready ; do echo Waiting for postgresql...; sleep 1; done"
+  }
+
+  echo "Without the component: jit is on but no provider, so queries run interpreted..."
+  $PSQL -c "SHOW jit;" | grep -x on
+  $PSQL -c "SELECT pg_jit_available();" | grep -x f
+  $PSQL -c "$JITQ" | grep -v "JIT"
+  $PSQL -c "$JITQ" | grep "Aggregate"
+
+  echo "Installing the component and restarting..."
+  snap install "$COMP" --dangerous
+  snap components postgresql | grep -E "postgresql\+jit\s+installed\s+standard"
+  restart
+  $PSQL -c "SHOW snap.jit;" | grep -x "component 18.6"
+  $PSQL -c "SHOW jit_provider;" | grep -E "^\.\./.*/components/.*/jit/lib/llvmjit$"
+  $PSQL -c "SELECT pg_jit_available();" | grep -x t
+  $PSQL -c "$JITQ" | grep -E "^JIT:"
+  $PSQL -c "$JITQ" | grep -E "Functions: [1-9]"
+  $PSQL -c "$JITQ" | grep -E "Inlining true, Optimization true"
+
+  echo "Removing the component: back to interpreted execution..."
+  snap remove postgresql+jit
+  restart
+  $PSQL -c "SHOW jit_provider;" | grep -x llvmjit
+  $PSQL -c "SELECT pg_jit_available();" | grep -x f
+  $PSQL -c "$JITQ" | grep "Aggregate"
+
+  echo "Ensure no AppArmor denials from the daemon..."
+  if journalctl -k | grep 'apparmor="DENIED"' | grep 'profile="snap.postgresql.postgresql"'; then
+    echo "ERROR: AppArmor denials produced by the postgresql daemon (see above)" >&2
+    exit 1
+  fi
+
+  echo "JIT component test completed."
