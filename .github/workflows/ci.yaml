@@ -18,7 +18,7 @@ on:
 jobs:
   lint-workflows:
     name: Lint .github/workflows/
-    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v53.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v54.0.0
     permissions:
       contents: read
     cache-mode: none
@@ -43,7 +43,7 @@ jobs:
 
   build:
     name: Build snap
-    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v53.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_snap.yaml@v54.0.0
     permissions:
       contents: read
     cache-mode: none
