@@ -149,7 +149,7 @@ apps:
       - network
       - network-bind
   rewind:
-    command: usr/bin/pg_rewind
+    command: rewind.sh
     plugs:
       - network
   pgbench:
