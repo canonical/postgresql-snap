@@ -7,5 +7,4 @@ fi
 
 PG_MAJOR_VER=$(echo "$SNAP_VERSION" | cut -d "." -f 1)
 
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- \
-  "$SNAP/usr/lib/postgresql/$PG_MAJOR_VER/bin/pg_rewind" "$@"
+"$SNAP/usr/bin/setpriv" --clear-groups --reuid _daemon_ --regid root -- "$SNAP/usr/lib/postgresql/$PG_MAJOR_VER/bin/pg_rewind" "$@"
