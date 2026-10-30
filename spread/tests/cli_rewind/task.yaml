@@ -1,0 +1,54 @@
+summary: PostgreSQL rewind CLI tests
+
+execute: |
+  echo "Testing rewind..."
+
+  MAIN_DATA=/var/lib/postgresql/16/main
+  BK_DIR=/var/snap/postgresql/common/pg_rewind_test
+
+  # pg_rewind needs full-page images on the target (the snap clusters ship
+  # no data checksums) and its pre-divergence WAL segment to be kept around
+  postgresql.psql -U postgres -h /tmp -c "ALTER SYSTEM SET wal_log_hints = on;"
+  postgresql.psql -U postgres -h /tmp -c "ALTER SYSTEM SET wal_keep_size = '256MB';"
+  snap stop postgresql.postgresql
+  snap start postgresql.postgresql
+  timeout 60 /bin/bash -c "while ! postgresql.isready -h /tmp -p 5432; do sleep 1; done"
+
+  echo "Creating test data on the old primary..."
+  postgresql.psql -U postgres -h /tmp -c "
+    CREATE TABLE rewind_test (id SERIAL PRIMARY KEY, name TEXT);
+    INSERT INTO rewind_test (name) VALUES ('old-primary');
+  "
+
+  echo "Creating a standby from a base backup..."
+  postgresql.basebackup -R -D $BK_DIR -U postgres -h /tmp
+  chown -R 584792:root $BK_DIR
+  postgresql.ctl -D $BK_DIR -o "-p 5433 -k /tmp" -l $BK_DIR/postgresql.log start
+  timeout 30 /bin/bash -c "while ! postgresql.isready -h /tmp -p 5433; do sleep 1; done"
+
+  echo "Promoting the standby (forks a new timeline) and diverging both clusters..."
+  postgresql.ctl -D $BK_DIR promote
+  timeout 30 /bin/bash -c "while postgresql.psql -U postgres -h /tmp -p 5433 -tAc 'SELECT pg_is_in_recovery();' | grep -q t; do sleep 1; done"
+  test "$(postgresql.psql -U postgres -h /tmp -p 5433 -tAc "SELECT timeline_id FROM pg_control_checkpoint();")" = "2"
+  postgresql.psql -U postgres -h /tmp -p 5433 -c "INSERT INTO rewind_test (name) VALUES ('new-primary');"
+  postgresql.psql -U postgres -h /tmp -c "INSERT INTO rewind_test (name) VALUES ('stale-primary');"
+
+  echo "Rewinding the old primary onto the new timeline..."
+  snap stop postgresql.postgresql
+  postgresql.rewind -R --target-pgdata=$MAIN_DATA \
+    --source-server="host=/tmp port=5433 user=postgres dbname=postgres"
+
+  echo "Restarting the old primary, now a standby of the new primary..."
+  snap start postgresql.postgresql
+  timeout 30 /bin/bash -c "while ! postgresql.isready -h /tmp -p 5432; do sleep 1; done"
+  postgresql.psql -U postgres -h /tmp -tAc "SELECT pg_is_in_recovery();" | grep -q t
+
+  echo "Checking the rewound data..."
+  timeout 60 /bin/bash -c "while ! postgresql.psql -U postgres -h /tmp -tAc \"SELECT 1 FROM rewind_test WHERE name='new-primary';\" | grep -q 1; do sleep 1; done"
+  postgresql.psql -U postgres -h /tmp -c "SELECT name FROM rewind_test ORDER BY id;" | grep "old-primary"
+  postgresql.psql -U postgres -h /tmp -c "SELECT name FROM rewind_test ORDER BY id;" | grep "new-primary"
+  postgresql.psql -U postgres -h /tmp -c "SELECT name FROM rewind_test ORDER BY id;" | grep "stale-primary" && exit 1 || true # failure expected
+
+  echo "Cleaning up..."
+  postgresql.ctl -D $BK_DIR -m immediate stop
+  rm -rf $BK_DIR

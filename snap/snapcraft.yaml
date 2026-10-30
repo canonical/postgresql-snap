@@ -148,6 +148,10 @@ apps:
     plugs:
       - network
       - network-bind
+  rewind:
+    command: rewind.sh
+    plugs:
+      - network
   pgbench:
     command: usr/bin/pgbench
     plugs:

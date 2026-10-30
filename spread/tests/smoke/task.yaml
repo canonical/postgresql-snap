@@ -33,4 +33,5 @@ execute: |
   postgresql.recvlogical --help
   # postgresql.renamecluster --help # Missing --help
   postgresql.restore --help
+  postgresql.rewind --help
 
