@@ -22,6 +22,16 @@ execute: |
 
   echo "Creating a standby from a base backup..."
   postgresql.basebackup -R -D $BK_DIR -U postgres -h /tmp
+  # A base backup contains only the data directory, but the snap keeps the
+  # cluster config in /etc/postgresql/16/main (Debian-style layout), so the
+  # backup has no postgresql.conf and cannot start: write the standby a
+  # minimal config of its own. Port and socket dir are passed via the -o
+  # args below. The rewound primary streams WAL from the standby, so the
+  # 'replication' pseudo-database must be trusted too ('all' doesn't match it).
+  echo "port = 5433
+  unix_socket_directories = '/tmp'" > $BK_DIR/postgresql.conf
+  echo "local all all trust
+  local replication all trust" > $BK_DIR/pg_hba.conf
   chown -R 584792:root $BK_DIR
   postgresql.ctl -D $BK_DIR -o "-p 5433 -k /tmp" -l $BK_DIR/postgresql.log start
   timeout 30 /bin/bash -c "while ! postgresql.isready -h /tmp -p 5433; do sleep 1; done"
