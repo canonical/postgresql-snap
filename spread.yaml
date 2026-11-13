@@ -22,5 +22,6 @@ suites:
 
 exclude:
   - .git
+  - .tox
 
 kill-timeout: 1h
